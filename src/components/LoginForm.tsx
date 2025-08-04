@@ -34,6 +34,11 @@ const LoginForm = () => {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo à plataforma RentCar.",
       });
+      
+      // Redirecionar para o dashboard após login bem-sucedido
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     }, 1500);
   };
 

@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Car, Mail, Lock } from "lucide-react";
+import { Car, Mail, Lock, Loader2 } from "lucide-react";
+import { authAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,20 +30,35 @@ const LoginForm = () => {
     }
 
     setIsLoading(true);
-    
-    // Simular autenticação
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const response = await authAPI.loginDriver(email, password);
+      const { token, motorista } = response.data;
+
+      // Store auth data
+      login(token, { 
+        id: motorista.id,
+        nome: motorista.nome, 
+        email: motorista.email,
+        role: 'driver'
+      });
+
       toast({
         title: "Login realizado com sucesso!",
-        description: "Bem-vindo à plataforma RentCar.",
+        description: `Bem-vindo, ${motorista.nome}`,
       });
-      
-      // Redirecionar para o dashboard após login bem-sucedido
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1000);
-    }, 1500);
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "Erro ao fazer login. Tente novamente.";
+      toast({
+        title: "Erro no login",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,31 +129,59 @@ const LoginForm = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
               </Button>
             </form>
 
+            <div className="mt-6 text-center space-y-2">
+              <Link 
+                to="/register" 
+                className="text-sm text-primary hover:underline"
+              >
+                Não tem uma conta? Cadastre-se
+              </Link>
+              <br />
+              <a 
+                href="#" 
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Esqueceu sua senha?
+              </a>
+            </div>
+
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Ainda não tem cadastro?{" "}
-                <Link 
-                  to="/register" 
-                  className="text-primary font-medium hover:underline"
-                >
-                  Cadastre-se
-                </Link>
-              </p>
+              <Link 
+                to="/admin/login" 
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Acesso Administrativo →
+              </Link>
             </div>
           </CardContent>
         </Card>
 
         {/* Informações adicionais */}
-        <div className="text-center text-xs text-muted-foreground">
-          <p>Ao continuar, você aceita nossos</p>
-          <p>
-            <Link to="/terms" className="underline">Termos de Uso</Link> e{" "}
-            <Link to="/privacy" className="underline">Política de Privacidade</Link>
+        <div className="mt-8 pt-6 border-t text-center">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Car className="h-5 w-5" />
+            <span className="text-lg font-bold">RentCar</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Aluguel de veículos para motoristas profissionais
           </p>
+        </div>
+
+        <div className="mt-4 text-center text-xs text-muted-foreground">
+          <a href="#" className="hover:text-primary">Termos de Uso</a>
+          {" • "}
+          <a href="#" className="hover:text-primary">Política de Privacidade</a>
         </div>
       </div>
     </div>

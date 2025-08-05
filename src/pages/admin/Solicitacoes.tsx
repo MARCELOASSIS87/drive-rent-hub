@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,80 +8,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
+import { rentalRequestsAPI } from "@/services/api";
+import { RentalRequest } from "@/types/backend";
 
-// Mock data for rental requests since backend doesn't have this endpoint yet
-interface RentalRequest {
-  id: number;
-  motorista: {
-    id: number;
-    nome: string;
-    email: string;
-  };
-  veiculo: {
-    id: number;
-    marca: string;
-    modelo: string;
-    placa: string;
-  };
-  data_inicio: string;
-  data_fim: string;
-  status: 'pendente' | 'aprovado' | 'recusado';
-  created_at: string;
-  valor_total: number;
-}
-
-const mockRequests: RentalRequest[] = [
-  {
-    id: 1,
-    motorista: { id: 1, nome: "João Silva", email: "joao@email.com" },
-    veiculo: { id: 1, marca: "Toyota", modelo: "Corolla", placa: "ABC-1234" },
-    data_inicio: "2024-12-10",
-    data_fim: "2024-12-15",
-    status: "pendente",
-    created_at: "2024-12-05T10:00:00Z",
-    valor_total: 500.00
-  },
-  {
-    id: 2,
-    motorista: { id: 2, nome: "Maria Santos", email: "maria@email.com" },
-    veiculo: { id: 2, marca: "Honda", modelo: "Civic", placa: "DEF-5678" },
-    data_inicio: "2024-12-12",
-    data_fim: "2024-12-20",
-    status: "pendente",
-    created_at: "2024-12-06T14:30:00Z",
-    valor_total: 800.00
-  }
-];
 
 const Solicitacoes = () => {
-  const [requests, setRequests] = useState<RentalRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<RentalRequest[]>([]);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showContractDialog, setShowContractDialog] = useState(false);
   const { toast } = useToast();
 
+  const loadRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await rentalRequestsAPI.list();
+      setRequests(response.data);
+    } catch (error: unknown) {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar solicitações",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
   const handleApprove = async (request: RentalRequest) => {
     try {
       setActionLoading(request.id);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state
-      setRequests(prev => prev.map(req => 
-        req.id === request.id 
+      await rentalRequestsAPI.updateStatus(request.id, 'aprovado');
+      setRequests(prev => prev.map(req =>
+        req.id === request.id
           ? { ...req, status: 'aprovado' as const }
           : req
       ));
-      
+
       toast({
         title: "Solicitação aprovada",
         description: `Solicitação de ${request.motorista.nome} foi aprovada`,
       });
-      
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Erro ao aprovar solicitação",
@@ -104,26 +79,20 @@ const Solicitacoes = () => {
 
     try {
       setActionLoading(selectedRequest.id);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state
-      setRequests(prev => prev.map(req => 
-        req.id === selectedRequest.id 
+      await rentalRequestsAPI.updateStatus(selectedRequest.id, 'recusado', rejectReason);
+      setRequests(prev => prev.map(req =>
+        req.id === selectedRequest.id
           ? { ...req, status: 'recusado' as const }
           : req
       ));
-      
       toast({
         title: "Solicitação recusada",
-        description: `Solicitação de ${selectedRequest.motorista.nome} foi recusada`,
+        description: `Solicitação de ${selectedRequest.motorista_nome} foi recusada`,
       });
-      
       setShowRejectDialog(false);
       setSelectedRequest(null);
       setRejectReason("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Erro ao recusar solicitação",
@@ -169,7 +138,13 @@ const Solicitacoes = () => {
   };
 
   const pendingRequests = requests.filter(req => req.status === 'pendente');
-
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -208,8 +183,14 @@ const Solicitacoes = () => {
                   <TableRow key={request.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{request.motorista.nome}</p>
-                        <p className="text-sm text-muted-foreground">{request.motorista.email}</p>
+                        <p className="font-medium">{request.motorista_nome}</p>
+                        <p className="text-sm text-muted-foreground">{request.motorista_email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{request.marca} {request.modelo}</p>
+                        <p className="text-sm text-muted-foreground">{request.placa}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -225,7 +206,7 @@ const Solicitacoes = () => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrency(request.valor_total)}
+                      {formatCurrency(request.valor_total || 0)}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(request.status)}
@@ -284,7 +265,7 @@ const Solicitacoes = () => {
           <DialogHeader>
             <DialogTitle>Recusar Solicitação</DialogTitle>
             <DialogDescription>
-              Informe o motivo da recusa para {selectedRequest?.motorista.nome}
+              Informe o motivo da recusa para {selectedRequest?.motorista_nome}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -334,31 +315,31 @@ const Solicitacoes = () => {
           <div className="py-4">
             <div className="bg-muted/50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">CONTRATO DE LOCAÇÃO DE VEÍCULO</h3>
-              
+
               <div className="space-y-4">
                 <div>
-                  <strong>Locatário:</strong> {selectedRequest?.motorista.nome}<br />
-                  <strong>E-mail:</strong> {selectedRequest?.motorista.email}
+                  <strong>Locatário:</strong> {selectedRequest?.motorista_nome}<br />
+                  <strong>E-mail:</strong> {selectedRequest?.motorista_email}
                 </div>
-                
+
                 <div>
-                  <strong>Veículo:</strong> {selectedRequest?.veiculo.marca} {selectedRequest?.veiculo.modelo}<br />
-                  <strong>Placa:</strong> {selectedRequest?.veiculo.placa}
+                  <strong>Veículo:</strong> {selectedRequest?.marca} {selectedRequest?.modelo}<br />
+                  <strong>Placa:</strong> {selectedRequest?.placa}
                 </div>
-                
+
                 <div>
                   <strong>Período:</strong> {selectedRequest && formatDate(selectedRequest.data_inicio)} até {selectedRequest && formatDate(selectedRequest.data_fim)}<br />
                   <strong>Valor Total:</strong> {selectedRequest && formatCurrency(selectedRequest.valor_total)}
                 </div>
-                
+
                 <div className="mt-6 p-4 bg-background rounded border">
                   <p className="text-sm text-muted-foreground">
-                    Este é um contrato digital gerado automaticamente. 
-                    O locatário concorda com os termos e condições de locação 
+                    Este é um contrato digital gerado automaticamente.
+                    O locatário concorda com os termos e condições de locação
                     estabelecidos pela empresa.
                   </p>
                 </div>
-                
+
                 <div className="text-center mt-6">
                   <p className="text-sm font-medium">Status: Aprovado</p>
                   <p className="text-xs text-muted-foreground">

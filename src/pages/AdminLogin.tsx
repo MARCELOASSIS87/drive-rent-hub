@@ -20,7 +20,7 @@ const AdminLogin = () => {
   useEffect(() => {
     const hasToken = !!localStorage.getItem("token");
 
-    if ((!isAuthenticated && !hasToken) || (isAuthenticated && !isAdmin)) {
+     if (isAuthenticated && isAdmin) {
       navigate("/admin/dashboard");
     }
   }, [isAuthenticated, isAdmin, navigate]);
@@ -41,6 +41,8 @@ const AdminLogin = () => {
 
     try {
       const response = await authAPI.loginAdmin(email, password);
+      console.log("loginAdmin →", response.data);
+
       const { token, nome, role } = response.data;
 
       // Store auth data

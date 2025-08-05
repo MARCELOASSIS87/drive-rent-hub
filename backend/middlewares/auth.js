@@ -9,7 +9,8 @@ function authMiddleware(req, res, next) {
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Token inválido' });
 
-    req.admin = decoded; // Inclui os dados do admin autenticado na request
+    req.user = decoded;
+    req.admin = decoded;// Inclui os dados do admin autenticado na request
     next();
   });
 }

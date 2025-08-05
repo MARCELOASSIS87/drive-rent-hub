@@ -36,6 +36,36 @@ export interface Vehicle {
   ativo: number;
 }
 
+export interface RentalRequest {
+  id: number;
+  motorista_id: number;
+  motorista_nome: string;
+  motorista_email: string;
+
+  veiculo_id: number;
+  marca: string;   // Marca do carro
+  modelo: string;  // Modelo do carro
+  placa: string;   // Placa do carro
+
+  data_inicio: string;
+  data_fim: string;
+  valor_total: number;
+  status: "pendente" | "aprovado" | "recusado";
+
+  // Se o back já te devolve o objeto inteiro, pode aninhar:
+  motorista?: {
+    nome: string;
+    email: string;
+    // …outros campos do motorista
+  };
+  veiculo?: {
+    marca: string;
+    modelo: string;
+    placa: string;
+    // …outros campos do veículo
+  };
+}
+
 export interface AdminLoginResponse {
   token: string;
   nome: string;

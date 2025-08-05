@@ -18,7 +18,8 @@ const veiculosRoutes = require('./routes/veiculosRoutes');
 app.use('/veiculos', veiculosRoutes);
 const motoristasRoutes = require('./routes/motoristasRoutes');
 app.use('/motoristas', motoristasRoutes);
-
+const rentalRequestsRoutes = require('./routes/rentalRequestsRoutes');
+app.use('/solicitacoes', rentalRequestsRoutes);
 // (no futuro: outras rotas)
 
 module.exports = app;

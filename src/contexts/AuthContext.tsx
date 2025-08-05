@@ -4,7 +4,7 @@ interface User {
   id?: number;
   nome: string;
   email: string;
-  role?: 'admin' | 'super' | 'driver';
+  role?: 'comum' | 'super' | 'driver';
 }
 
 interface AuthContextType {
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAuthenticated = !!token && !!user;
-  const isAdmin = user?.role === 'admin' || user?.role === 'super';
+  const isAdmin = user?.role === 'super' || user?.role === 'comum';
   const isDriver = user?.role === 'driver' || !user?.role;
 
   return (

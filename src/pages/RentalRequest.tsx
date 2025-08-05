@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,26 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Calendar, MapPin, Fuel, Settings, Loader2 } from "lucide-react";
-import { vehiclesAPI } from "@/services/api";
+import { vehiclesAPI, rentalRequestsAPI } from "@/services/api";
 import { Vehicle } from "@/types/backend";
+import { useAuth } from "@/contexts/AuthContext";
 
 const RentalRequest = () => {
   const { carId } = useParams<{ carId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [car, setCar] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (carId) {
-      loadCar();
-    }
-  }, [carId]);
-
-  const loadCar = async () => {
+  const loadCar = useCallback(async () => {
+    if (!carId) return;
     try {
       setLoading(true);
       const response = await vehiclesAPI.getById(Number(carId));
@@ -40,7 +37,11 @@ const RentalRequest = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [carId, navigate, toast]);
+
+  useEffect(() => {
+    loadCar();
+  }, [loadCar]);
 
   if (loading) {
     return (
@@ -96,7 +97,14 @@ const RentalRequest = () => {
       });
       return;
     }
-
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (new Date(endDate) <= new Date(startDate)) {
       toast({
         title: "Erro",
@@ -109,8 +117,13 @@ const RentalRequest = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call for rental request
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!car) throw new Error('Veículo não encontrado');
+
+      await rentalRequestsAPI.create({
+        veiculo_id: car.id,
+        data_inicio: startDate,
+        data_fim: endDate
+      });
 
       toast({
         title: "Solicitação enviada!",

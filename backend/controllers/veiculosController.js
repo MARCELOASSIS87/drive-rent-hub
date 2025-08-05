@@ -1,5 +1,5 @@
 const pool = require('../config/db');
-const allowedStatuses = ['disponível', 'em uso', 'manutenção'];
+const allowedStatuses = ['disponivel', 'em uso', 'manutencao'];
 
 // Listar todos os veículos (ativos)
 exports.listarVeiculos = async (req, res) => {
@@ -44,7 +44,7 @@ exports.criarVeiculo = async (req, res) => {
     numero_seguro,
     manutencao_proxima_data
   } = req.body;
-  const status = req.body.status || 'disponivel';
+  const status = req.body.status || 'disponível';
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ error: 'Status inválido' });
   }
@@ -115,7 +115,7 @@ exports.editarVeiculo = async (req, res) => {
     numero_seguro,
     manutencao_proxima_data
   } = req.body;
-  const status = req.body.status || 'disponivel';
+  const status = req.body.status || 'disponível';
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ error: 'Status inválido' });
   }

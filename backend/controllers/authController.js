@@ -1,9 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto_trocar_em_producao';
-
+const { JWT_SECRET } = require('../config/jwt');
 exports.login = async (req, res) => {
   const { email, senha, password } = req.body;
   const senhaEntrada = senha || password;
@@ -21,7 +19,16 @@ exports.login = async (req, res) => {
 
     if (admins.length > 0) {
       const admin = admins[0];
-      const senhaOk = await bcrypt.compare(senhaEntrada, admin.senha_hash);
+       // Alguns bancos podem armazenar a senha no campo `senha` ao invés de `senha_hash`.
+      // Fazemos o fallback para evitar que o login quebre caso o nome da coluna seja diferente.
+      const hash = admin.senha_hash || admin.senha;
+      if (!hash) {
+        return res
+          .status(500)
+          .json({ error: 'Senha não configurada para este usuário' });
+      }
+
+      const senhaOk = await bcrypt.compare(senhaEntrada, hash);
       if (!senhaOk) return res.status(401).json({ error: 'Senha incorreta' });
 
       const token = jwt.sign(

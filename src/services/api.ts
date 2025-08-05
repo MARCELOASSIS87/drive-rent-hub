@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Create axios instance
 export const api = axios.create({
@@ -48,7 +48,7 @@ export const authAPI = {
     api.post('/motoristas/login', { email, password }),
   
   // Driver register
-  registerDriver: (data: any) =>
+  registerDriver: (data: Record<string, unknown>) =>
     api.post('/motoristas', data),
 };
 
@@ -109,11 +109,11 @@ export const adminAPI = {
     api.get('/admin'),
   
   // Create admin
-  create: (data: any) =>
+  create: (data: Record<string, unknown>) =>
     api.post('/admin', data),
   
   // Update admin
-  update: (id: number, data: any) =>
+  update: (id: number, data: Record<string, unknown>) =>
     api.put(`/admin/${id}`, data),
   
   // Delete admin

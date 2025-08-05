@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Car, FileText, CheckCircle } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const AdminDashboard = () => {
   return (
     <div className="p-6">
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Backend:</span>
-                <span className="text-sm font-medium">localhost:3001</span>
+                <span className="text-sm font-medium">{API_URL}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Versão:</span>

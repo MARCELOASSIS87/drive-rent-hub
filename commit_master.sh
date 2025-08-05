@@ -29,5 +29,5 @@ git commit -m "$COMMIT_MESSAGE"
 echo "🚀 Enviando alterações para a branch 'master'..."
 git push origin main
 
-echo "----------------------------------------"
+echo "----------------------------------------" 
 echo "✅ Sucesso! Suas alterações foram enviadas para a branch 'master'."

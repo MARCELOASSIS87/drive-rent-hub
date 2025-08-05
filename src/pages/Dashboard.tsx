@@ -20,12 +20,13 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const response = await vehiclesAPI.list();
-      const availableVehicles = response.data.filter((vehicle: Vehicle) => 
-        vehicle.status === 'disponível' && vehicle.ativo === 1
+      const availableVehicles = response.data.filter((vehicle: Vehicle) =>
+        (vehicle.status === "disponivel") &&
+        vehicle.ativo === 1
       );
       setVehicles(availableVehicles);
       setFilteredVehicles(availableVehicles);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Erro ao carregar veículos disponíveis",

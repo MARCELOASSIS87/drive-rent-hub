@@ -28,9 +28,10 @@ export interface Vehicle {
   renavam: string;
   cor: string;
   numero_seguro: string;
-  status: 'disponível' | 'em uso' | 'manutenção';
+  status: 'disponivel' | 'em uso' | 'manutencao';
   manutencao_proxima_data: string;
   foto_principal_url: string;
+  foto_principal?: string;
   fotos_urls: string;
   ativo: number;
 }

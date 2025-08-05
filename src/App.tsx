@@ -16,6 +16,9 @@ import Motoristas from "./pages/admin/Motoristas";
 import Veiculos from "./pages/admin/Veiculos";
 import Solicitacoes from "./pages/admin/Solicitacoes";
 import ContratoDigital from "./pages/ContratoDigital";
+import DriverLayout from "./layouts/DriverLayout";
+import MyRequests from "./pages/MyRequests";
+import ActiveRentals from "./pages/ActiveRentals";
 
 const queryClient = new QueryClient();
 
@@ -30,9 +33,11 @@ const App = () => (
             {/* Driver routes */}
             <Route path="/" element={<Index />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/rental-request/:carId" element={<RentalRequest />} />
-            <Route path="/contrato/:id" element={<ContratoDigital />} />
+            <Route path="/dashboard" element={<DriverLayout><Dashboard /></DriverLayout>} />
+            <Route path="/solicitacoes" element={<DriverLayout><MyRequests /></DriverLayout>} />
+            <Route path="/alugueis" element={<DriverLayout><ActiveRentals /></DriverLayout>} />
+            <Route path="/rental-request/:carId" element={<DriverLayout><RentalRequest /></DriverLayout>} />
+            <Route path="/contrato/:id" element={<DriverLayout><ContratoDigital /></DriverLayout>} />
             
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

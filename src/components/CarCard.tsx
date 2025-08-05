@@ -11,7 +11,7 @@ interface CarCardProps {
 export const CarCard = ({ car }: CarCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "disponível":
+      case "disponivel":
         return "bg-green-100 text-green-800";
       case "em uso":
         return "bg-blue-100 text-blue-800";
@@ -29,12 +29,17 @@ export const CarCard = ({ car }: CarCardProps) => {
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <CardHeader className="p-0">
         <img
-          src={car.foto_principal_url || "/placeholder.svg"}
+          src={
+            car.foto_principal_url
+              ? `http://localhost:3001${car.foto_principal_url}`
+              : "/placeholder.svg"
+          }
           alt={`${car.marca} ${car.modelo}`}
           className="w-full h-48 object-cover rounded-lg"
         />
+
       </CardHeader>
-      
+
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -42,12 +47,12 @@ export const CarCard = ({ car }: CarCardProps) => {
             <CardDescription>{car.ano}</CardDescription>
           </div>
           <Badge className={getStatusColor(car.status)}>
-            {car.status === 'disponível' ? 'Disponível' : 
-             car.status === 'em uso' ? 'Em uso' : 'Manutenção'}
+            {car.status === 'disponivel' ? 'Disponível' :
+              car.status === 'em uso' ? 'Em uso' : 'Manutenção'}
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
@@ -66,11 +71,11 @@ export const CarCard = ({ car }: CarCardProps) => {
 
       <CardFooter>
         <Link to={`/rental-request/${car.id}`} className="w-full">
-          <Button 
-            className="w-full" 
-            disabled={car.status !== 'disponível'}
+          <Button
+            className="w-full"
+            disabled={car.status !== 'disponivel'}
           >
-            {car.status === 'disponível' ? 'Solicitar Aluguel' : 'Indisponível'}
+            {car.status === 'disponivel' ? 'Solicitar Aluguel' : 'Indisponível'}
           </Button>
         </Link>
       </CardFooter>

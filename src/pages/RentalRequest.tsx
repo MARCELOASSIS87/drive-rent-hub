@@ -30,7 +30,7 @@ const RentalRequest = () => {
       setLoading(true);
       const response = await vehiclesAPI.getById(Number(carId));
       setCar(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Veículo não encontrado",
@@ -87,7 +87,7 @@ const RentalRequest = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!startDate || !endDate) {
       toast({
         title: "Erro",
@@ -118,7 +118,7 @@ const RentalRequest = () => {
       });
 
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Erro ao enviar solicitação. Tente novamente.",
@@ -149,17 +149,22 @@ const RentalRequest = () => {
             </CardHeader>
             <CardContent>
               <img
-                src={car.foto_principal_url || "/placeholder.svg"}
+                src={
+                  car.foto_principal_url
+                    ? `http://localhost:3001${car.foto_principal_url}`
+                    : "/placeholder.svg"
+                }
                 alt={`${car.marca} ${car.modelo}`}
                 className="w-full h-64 object-cover rounded-lg mb-4"
               />
-              
+
+
               <div className="space-y-4">
                 <div>
                   <h3 className="text-2xl font-bold text-foreground">{car.marca} {car.modelo}</h3>
                   <p className="text-muted-foreground">{car.ano}</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -170,7 +175,7 @@ const RentalRequest = () => {
                     <span>Cor: {car.cor}</span>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Diária:</span>
@@ -230,9 +235,9 @@ const RentalRequest = () => {
                         <div className="flex justify-between text-lg font-bold border-t pt-2">
                           <span>Total:</span>
                           <span className="text-2xl font-bold text-primary">
-                            R$ {totalAmount.toLocaleString('pt-BR', { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 2 
+                            R$ {totalAmount.toLocaleString('pt-BR', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
                             })}
                           </span>
                         </div>

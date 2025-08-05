@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect  } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,15 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isAdmin } = useAuth();
+
+  useEffect(() => {
+    const hasToken = !!localStorage.getItem("token");
+
+    if ((!isAuthenticated && !hasToken) || (isAuthenticated && !isAdmin)) {
+      navigate("/admin/dashboard");
+    }
+  }, [isAuthenticated, isAdmin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,9 +51,9 @@ const AdminLogin = () => {
         description: `Bem-vindo, ${nome}`,
       });
 
-      navigate("/admin/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || "Erro ao fazer login. Tente novamente.";
+      
+    } catch (error: unknown) {
+      const errorMessage = "Erro ao fazer login. Tente novamente.";
       toast({
         title: "Erro no login",
         description: errorMessage,

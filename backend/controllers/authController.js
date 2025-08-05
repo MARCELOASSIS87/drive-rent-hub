@@ -5,7 +5,12 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto_trocar_em_producao';
 
 exports.login = async (req, res) => {
-  const { email, senha } = req.body;
+  const { email, senha, password } = req.body;
+  const senhaEntrada = senha || password;
+
+  if (!senhaEntrada) {
+    return res.status(400).json({ error: 'Senha não fornecida' });
+  }
 
   try {
     // 1. Tenta como admin
@@ -16,7 +21,7 @@ exports.login = async (req, res) => {
 
     if (admins.length > 0) {
       const admin = admins[0];
-      const senhaOk = await bcrypt.compare(senha, admin.senha_hash);
+      const senhaOk = await bcrypt.compare(senhaEntrada, admin.senha_hash);
       if (!senhaOk) return res.status(401).json({ error: 'Senha incorreta' });
 
       const token = jwt.sign(
@@ -39,7 +44,7 @@ exports.login = async (req, res) => {
     }
 
     const motorista = motoristas[0];
-    const senhaOk = await bcrypt.compare(senha, motorista.senha_hash);
+    const senhaOk = await bcrypt.compare(senhaEntrada, motorista.senha_hash);
     if (!senhaOk) return res.status(401).json({ error: 'Senha incorreta' });
 
     if (motorista.status !== 'aprovado') {

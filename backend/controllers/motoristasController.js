@@ -61,8 +61,12 @@ exports.criarMotorista = async (req, res) => {
   }
 };
 exports.loginMotorista = async (req, res) => {
-  const { email, senha } = req.body;
+  const { email, senha, password } = req.body;
+  const senhaEntrada = senha || password;
 
+  if (!senhaEntrada) {
+    return res.status(400).json({ error: 'Senha não fornecida' });
+  }
   try {
     const [rows] = await pool.query('SELECT * FROM motoristas WHERE email = ?', [email]);
 
@@ -71,7 +75,7 @@ exports.loginMotorista = async (req, res) => {
     }
 
     const motorista = rows[0];
-    const senhaValida = await bcrypt.compare(senha, motorista.senha_hash);
+    const senhaValida = await bcrypt.compare(senhaEntrada, motorista.senha_hash);
 
     if (!senhaValida) {
       return res.status(401).json({ error: 'Senha incorreta' });

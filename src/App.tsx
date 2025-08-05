@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import Motoristas from "./pages/admin/Motoristas";
 import Veiculos from "./pages/admin/Veiculos";
 import Solicitacoes from "./pages/admin/Solicitacoes";
+import ContratoDigital from "./pages/ContratoDigital";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/rental-request/:carId" element={<RentalRequest />} />
+            <Route path="/contrato/:id" element={<ContratoDigital />} />
             
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

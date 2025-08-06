@@ -5,7 +5,7 @@ const path = require('path');
 const motoristasController = require('../controllers/motoristasController');
 const auth = require('../middlewares/auth');
 const fs   = require('fs');
-
+const crypto = require('crypto');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

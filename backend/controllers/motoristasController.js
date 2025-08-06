@@ -115,7 +115,7 @@ exports.listarMotoristas = async (req, res) => {
     let query = `SELECT
          id, nome, email, telefone, cpf,
          data_nascimento, cnh_numero, cnh_validade, cnh_data_emissao,
-         cnh_categoria, cnh_ear,
+         cnh_categoria,
          cnh_foto_url, foto_perfil_url, selfie_cnh_url,
          comprovante_endereco_url, comprovante_vinculo_url, antecedentes_criminais_url,
          status

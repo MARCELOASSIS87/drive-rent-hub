@@ -42,14 +42,16 @@ export const authAPI = {
   // Admin login
   loginAdmin: (email: string, password: string) =>
     api.post('/login', { email, password }),
-  
+
   // Driver login  
   loginDriver: (email: string, password: string) =>
     api.post('/motoristas/login', { email, password }),
-  
+
   // Driver register
-  registerDriver: (data: Record<string, unknown>) =>
-    api.post('/motoristas', data),
+  registerDriver: (data: FormData) =>
+    api.post('/motoristas', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // Drivers API
@@ -57,15 +59,15 @@ export const driversAPI = {
   // List drivers with optional status filter
   list: (status?: string) =>
     api.get(`/motoristas${status ? `?status=${status}` : ''}`),
-  
+
   // Update driver status
   updateStatus: (id: number, status: string) =>
     api.put(`/motoristas/${id}/status`, { status }),
-  
+
   // Block driver
   block: (id: number) =>
     api.put(`/motoristas/${id}/bloquear`),
-  
+
   // Unblock driver
   unblock: (id: number) =>
     api.put(`/motoristas/${id}/desbloquear`),
@@ -76,46 +78,45 @@ export const vehiclesAPI = {
   // List active vehicles
   list: () =>
     api.get('/veiculos'),
-  
+
   // Get vehicle details
   getById: (id: number) =>
     api.get(`/veiculos/${id}`),
-  
+
   // Create vehicle
   create: (data: FormData) =>
     api.post('/veiculos', data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
-  
+
   // Update vehicle
   update: (id: number, data: FormData) =>
     api.put(`/veiculos/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
-  
+
   // Update vehicle status only
   updateStatus: (id: number, status: string) =>
     api.put(`/veiculos/${id}/status`, { status }),
-  
+
   // Delete vehicle
   delete: (id: number) =>
     api.delete(`/veiculos/${id}`),
 };
-
 // Admin API
 export const adminAPI = {
   // List admins
   list: () =>
     api.get('/admin'),
-  
+
   // Create admin
   create: (data: Record<string, unknown>) =>
     api.post('/admin', data),
-  
+
   // Update admin
   update: (id: number, data: Record<string, unknown>) =>
     api.put(`/admin/${id}`, data),
-  
+
   // Delete admin
   delete: (id: number) =>
     api.delete(`/admin/${id}`),

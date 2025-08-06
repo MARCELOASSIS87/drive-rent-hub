@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Car, User, Mail, Lock, Phone, MapPin, Calendar, Upload, FileText, CreditCard } from "lucide-react";
-
+import { authAPI } from "@/services/api";
+import { AxiosError } from "axios";
 const RegisterForm = () => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Dados pessoais
@@ -42,6 +44,8 @@ const RegisterForm = () => {
     cpfDocument: null as File | null,
     proofOfAddress: null as File | null,
     selfieWithCnh: null as File | null,
+    proofOfVinculo: null as File | null,
+    antecedentesCriminais: null as File | null,
   });
 
   // Experiência como motorista
@@ -51,7 +55,13 @@ const RegisterForm = () => {
     timeExperience: "",
     vehiclePreference: "",
   });
-
+  // Dados da CNH
+  const [cnhData, setCnhData] = useState({
+    numero: "",
+    validade: "",
+    dataEmissao: "",
+    categoria: "",
+  });
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleFileUpload = (field: keyof typeof documents) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +84,6 @@ const RegisterForm = () => {
       setStep(step - 1);
     }
   };
-
   const handleSubmit = async () => {
     if (!termsAccepted) {
       toast({
@@ -84,19 +93,53 @@ const RegisterForm = () => {
       });
       return;
     }
-
     setIsLoading(true);
-    
-    // Simular cadastro
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Seus documentos serão analisados em até 24 horas.",
-      });
-    }, 2000);
-  };
+    try {
+      const formData = new FormData();
+      // Dados pessoais
+      formData.append("nome", personalData.fullName);
+      formData.append("email", personalData.email);
+      formData.append("telefone", personalData.phone);
+      formData.append("cpf", personalData.cpf);
+      formData.append("data_nascimento", personalData.birthDate);
+      formData.append("senha", personalData.password);
+      // Campos de CNH
+      formData.append("cnh_numero", cnhData.numero);
+      formData.append("cnh_validade", cnhData.validade);
+      formData.append("cnh_data_emissao", cnhData.dataEmissao);
+      formData.append("cnh_categoria", cnhData.categoria);
+      // Documentos
+      if (documents.cnh) formData.append("foto_cnh", documents.cnh);
+      if (documents.cpfDocument) formData.append("foto_perfil", documents.cpfDocument);
+      if (documents.selfieWithCnh) formData.append("selfie_cnh", documents.selfieWithCnh);
+      if (documents.proofOfAddress)
+        formData.append("comprovante_endereco", documents.proofOfAddress);
+      if (documents.proofOfVinculo)
+        formData.append("documento_vinculo", documents.proofOfVinculo);
+      if (documents.antecedentesCriminais)
+        formData.append("antecedentes_criminais", documents.antecedentesCriminais);
 
+      await authAPI.registerDriver(formData);
+      toast({
+        title: "Sucesso",
+        description: "Cadastro enviado para análise. Você receberá um e-mail em até 24h.",
+      });
+      navigate("/"); // redireciona para login, por exemplo
+
+    } catch (err) {
+      const message =
+        err instanceof AxiosError
+          ? err.response?.data?.error || err.message
+          : "Erro inesperado";
+      toast({
+        title: "Falha no cadastro",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const renderStep1 = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -203,7 +246,6 @@ const RegisterForm = () => {
       </div>
     </div>
   );
-
   const renderStep2 = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,14 +327,52 @@ const RegisterForm = () => {
       </div>
     </div>
   );
-
   const renderStep3 = () => (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         Faça upload dos documentos necessários. Certifique-se de que estejam legíveis e dentro da validade.
       </p>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* CNH Número */}
+        <div className="space-y-2">
+          <Label>CNH Número*</Label>
+          <Input
+            value={cnhData.numero}
+            onChange={e => setCnhData(prev => ({ ...prev, numero: e.target.value }))}
+            placeholder="Digite o número da CNH"
+          />
+        </div>
+
+        {/* CNH Validade */}
+        <div className="space-y-2">
+          <Label>CNH Validade*</Label>
+          <Input
+            type="date"
+            value={cnhData.validade}
+            onChange={e => setCnhData(prev => ({ ...prev, validade: e.target.value }))}
+          />
+        </div>
+
+        {/* CNH Data de Emissão */}
+        <div className="space-y-2">
+          <Label>Data de Emissão*</Label>
+          <Input
+            type="date"
+            value={cnhData.dataEmissao}
+            onChange={e => setCnhData(prev => ({ ...prev, dataEmissao: e.target.value }))}
+          />
+        </div>
+
+        {/* CNH Categoria */}
+        <div className="space-y-2">
+          <Label>Categoria*</Label>
+          <Input
+            value={cnhData.categoria}
+            onChange={e => setCnhData(prev => ({ ...prev, categoria: e.target.value }))}
+            placeholder="Digite a categoria da CNH"
+          />
+        </div>
         <div className="space-y-2">
           <Label>CNH (Frente e Verso)*</Label>
           <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
@@ -349,7 +429,26 @@ const RegisterForm = () => {
             </label>
           </div>
         </div>
-
+        <div className="space-y-2">
+          <Label>Comprovante de Vínculo*</Label>
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileUpload('proofOfVinculo')}
+              className="hidden"
+              id="vinculo-upload"
+            />
+            <label htmlFor="vinculo-upload" className="cursor-pointer">
+              <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {documents.proofOfVinculo
+                  ? documents.proofOfVinculo.name
+                  : "Clique para fazer upload"}
+              </p>
+            </label>
+          </div>
+        </div>
         <div className="space-y-2">
           <Label>Selfie com CNH*</Label>
           <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
@@ -368,72 +467,31 @@ const RegisterForm = () => {
             </label>
           </div>
         </div>
+        <div className="space-y-2">
+          <Label>Antecedentes Criminais*</Label>
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileUpload('antecedentesCriminais')}
+              className="hidden"
+              id="antecedentes-upload"
+            />
+            <label htmlFor="antecedentes-upload" className="cursor-pointer">
+              <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {documents.antecedentesCriminais
+                  ? documents.antecedentesCriminais.name
+                  : "Clique para fazer upload"}
+              </p>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );
-
   const renderStep4 = () => (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="hasExperience"
-            checked={driverInfo.hasExperience}
-            onCheckedChange={(checked) => setDriverInfo(prev => ({ ...prev, hasExperience: checked as boolean }))}
-          />
-          <Label htmlFor="hasExperience">Já trabalho como motorista de aplicativo</Label>
-        </div>
-
-        {driverInfo.hasExperience && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
-            <div className="space-y-2">
-              <Label>Plataforma Principal</Label>
-              <Select value={driverInfo.platform} onValueChange={(value) => setDriverInfo(prev => ({ ...prev, platform: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a plataforma" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="uber">Uber</SelectItem>
-                  <SelectItem value="99">99</SelectItem>
-                  <SelectItem value="cabify">Cabify</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tempo de Experiência</Label>
-              <Select value={driverInfo.timeExperience} onValueChange={(value) => setDriverInfo(prev => ({ ...prev, timeExperience: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tempo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="menos-6m">Menos de 6 meses</SelectItem>
-                  <SelectItem value="6m-1a">6 meses a 1 ano</SelectItem>
-                  <SelectItem value="1a-3a">1 a 3 anos</SelectItem>
-                  <SelectItem value="mais-3a">Mais de 3 anos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label>Preferência de Veículo</Label>
-          <Select value={driverInfo.vehiclePreference} onValueChange={(value) => setDriverInfo(prev => ({ ...prev, vehiclePreference: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Tipo de veículo preferido" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hatch">Hatch (Econômico)</SelectItem>
-              <SelectItem value="sedan">Sedan (Conforto)</SelectItem>
-              <SelectItem value="suv">SUV (Premium)</SelectItem>
-              <SelectItem value="sem-preferencia">Sem preferência</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       <div className="space-y-4 pt-4 border-t">
         <div className="flex items-start space-x-2">
           <Checkbox
@@ -456,12 +514,11 @@ const RegisterForm = () => {
       </div>
     </div>
   );
-
   const stepTitles = [
     "Dados Pessoais",
     "Endereço",
-    "Documentos", 
-    "Experiência"
+    "Documentos",
+    "Aceite dos Termos"
   ];
 
   return (
@@ -483,9 +540,9 @@ const RegisterForm = () => {
             {stepTitles.map((title, index) => (
               <div key={index} className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                  ${step > index + 1 ? 'bg-success text-success-foreground' : 
-                    step === index + 1 ? 'bg-primary text-primary-foreground' : 
-                    'bg-muted text-muted-foreground'}`}>
+                  ${step > index + 1 ? 'bg-success text-success-foreground' :
+                    step === index + 1 ? 'bg-primary text-primary-foreground' :
+                      'bg-muted text-muted-foreground'}`}>
                   {index + 1}
                 </div>
                 <span className="text-xs mt-1 text-center">{title}</span>
@@ -493,7 +550,7 @@ const RegisterForm = () => {
             ))}
           </div>
           <div className="w-full bg-muted rounded-full h-2">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${(step / 4) * 100}%` }}
             />

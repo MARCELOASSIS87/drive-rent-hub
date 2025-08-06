@@ -9,7 +9,7 @@ import { ArrowLeft, Calendar, MapPin, Fuel, Settings, Loader2 } from "lucide-rea
 import { vehiclesAPI, rentalRequestsAPI } from "@/services/api";
 import { Vehicle } from "@/types/backend";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { formatCurrencyBR } from "@/lib/utils";
 const RentalRequest = () => {
   const { carId } = useParams<{ carId: string }>();
   const navigate = useNavigate();
@@ -81,8 +81,7 @@ const RentalRequest = () => {
     return diffDays || 1;
   };
 
-  // Calculate daily rate (mock for now)
-  const dailyRate = Math.floor(Math.random() * 200) + 100;
+  const dailyRate = car ? Number(car.valor_diaria || 0) : 0;
   const totalDays = calculateDays();
   const totalAmount = totalDays * dailyRate;
 
@@ -192,7 +191,7 @@ const RentalRequest = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Diária:</span>
-                    <span className="text-2xl font-bold text-primary">R$ {dailyRate}</span>
+                    <span className="text-2xl font-bold text-primary">{formatCurrencyBR(dailyRate)}</span>
                   </div>
                 </div>
               </div>
@@ -243,15 +242,12 @@ const RentalRequest = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Valor por dia:</span>
-                          <span className="font-medium">R$ {dailyRate}</span>
+                          <span className="font-medium">{formatCurrencyBR(dailyRate)}</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold border-t pt-2">
                           <span>Total:</span>
                           <span className="text-2xl font-bold text-primary">
-                            R$ {totalAmount.toLocaleString('pt-BR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
+                            {formatCurrencyBR(totalAmount)}
                           </span>
                         </div>
                       </div>

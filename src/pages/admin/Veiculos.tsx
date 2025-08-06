@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { vehiclesAPI } from "@/services/api";
 import { Vehicle } from "@/types/backend";
+import { formatCurrencyBR } from "@/lib/utils";
 
 const Veiculos = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -29,6 +30,7 @@ const Veiculos = () => {
     cor: "",
     numero_seguro: "",
     status: "disponível",
+    valor_diaria: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
@@ -42,7 +44,7 @@ const Veiculos = () => {
       setLoading(true);
       const response = await vehiclesAPI.list();
       setVehicles(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: "Erro ao carregar veículos",
@@ -63,6 +65,8 @@ const Veiculos = () => {
       cor: "",
       numero_seguro: "",
       status: "disponível",
+      valor_diaria: "",
+
     });
     setSelectedFile(null);
   };
@@ -83,25 +87,25 @@ const Veiculos = () => {
       Object.entries(formData).forEach(([key, value]) => {
         data.append(key, value);
       });
-      
+
       if (selectedFile) {
         data.append("foto_principal", selectedFile);
       }
 
       await vehiclesAPI.create(data);
-      
+
       toast({
         title: "Veículo adicionado",
         description: `${formData.marca} ${formData.modelo} foi adicionado com sucesso`,
       });
-      
+
       setShowAddDialog(false);
       resetForm();
       loadVehicles();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao adicionar veículo",
+        description: "Erro ao adicionar veículo",
         variant: "destructive",
       });
     } finally {
@@ -125,26 +129,26 @@ const Veiculos = () => {
       Object.entries(formData).forEach(([key, value]) => {
         data.append(key, value);
       });
-      
+
       if (selectedFile) {
         data.append("foto_principal", selectedFile);
       }
 
       await vehiclesAPI.update(selectedVehicle.id, data);
-      
+
       toast({
         title: "Veículo atualizado",
         description: `${formData.marca} ${formData.modelo} foi atualizado com sucesso`,
       });
-      
+
       setShowEditDialog(false);
       setSelectedVehicle(null);
       resetForm();
       loadVehicles();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao atualizar veículo",
+        description: "Erro ao atualizar veículo",
         variant: "destructive",
       });
     } finally {
@@ -158,19 +162,19 @@ const Veiculos = () => {
     try {
       setActionLoading(selectedVehicle.id);
       await vehiclesAPI.delete(selectedVehicle.id);
-      
+
       toast({
         title: "Veículo removido",
         description: `${selectedVehicle.marca} ${selectedVehicle.modelo} foi removido`,
       });
-      
+
       setShowDeleteDialog(false);
       setSelectedVehicle(null);
       loadVehicles();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.response?.data?.error || "Erro ao remover veículo",
+        description: "Erro ao remover veículo",
         variant: "destructive",
       });
     } finally {
@@ -189,6 +193,7 @@ const Veiculos = () => {
       cor: vehicle.cor,
       numero_seguro: vehicle.numero_seguro,
       status: vehicle.status,
+      valor_diaria: vehicle.valor_diaria.toString(),
     });
     setShowEditDialog(true);
   };
@@ -317,18 +322,30 @@ const Veiculos = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="disponível">Disponível</SelectItem>
-                      <SelectItem value="em uso">Em Uso</SelectItem>
-                      <SelectItem value="manutenção">Manutenção</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="valor_diaria">Valor da Diária (R$)</Label>
+                  <Input
+                    id="valor_diaria"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.valor_diaria}
+                    onChange={(e) => setFormData({ ...formData, valor_diaria: e.target.value })}
+                    placeholder="Ex: 150"
+                  />
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="disponível">Disponível</SelectItem>
+                    <SelectItem value="em uso">Em Uso</SelectItem>
+                    <SelectItem value="manutenção">Manutenção</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="foto">Foto Principal</Label>
@@ -373,6 +390,7 @@ const Veiculos = () => {
                   <TableHead>Placa</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Cor</TableHead>
+                  <TableHead>Valor Diária</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -386,6 +404,7 @@ const Veiculos = () => {
                     <TableCell>{vehicle.placa}</TableCell>
                     <TableCell>{vehicle.ano}</TableCell>
                     <TableCell>{vehicle.cor}</TableCell>
+                    <TableCell>{formatCurrencyBR(vehicle.valor_diaria)}</TableCell>
                     <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -490,6 +509,17 @@ const Veiculos = () => {
               </div>
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="edit-valor_diaria">Valor da Diária (R$)</Label>
+              <Input
+                id="edit-valor_diaria"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.valor_diaria}
+                onChange={(e) => setFormData({ ...formData, valor_diaria: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="edit-foto">Nova Foto (opcional)</Label>
               <Input
                 id="edit-foto"
@@ -525,8 +555,8 @@ const Veiculos = () => {
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
               disabled={actionLoading === selectedVehicle?.id}
             >

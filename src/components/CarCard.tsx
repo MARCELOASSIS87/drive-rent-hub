@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Vehicle } from "@/types/backend";
+import { formatCurrencyBR } from "@/lib/utils";
 
 interface CarCardProps {
   car: Vehicle;
@@ -22,8 +23,7 @@ export const CarCard = ({ car }: CarCardProps) => {
     }
   };
 
-  // Calculate daily rate (mock for now since backend doesn't have this field)
-  const dailyRate = Math.floor(Math.random() * 200) + 100;
+  const dailyRate = Number(car.valor_diaria || 0);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -64,7 +64,7 @@ export const CarCard = ({ car }: CarCardProps) => {
             <span className="font-medium">{car.cor}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
-            <span className="text-lg font-bold text-primary">R$ {dailyRate}/dia</span>
+            <span className="text-lg font-bold text-primary">{formatCurrencyBR(dailyRate)}/dia</span>
           </div>
         </div>
       </CardContent>

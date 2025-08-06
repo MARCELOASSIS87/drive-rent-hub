@@ -30,6 +30,7 @@ export interface Vehicle {
   numero_seguro: string;
   status: 'disponivel' | 'em uso' | 'manutencao';
   manutencao_proxima_data: string;
+  valor_diaria: number;
   foto_principal_url: string;
   foto_principal?: string;
   fotos_urls: string;

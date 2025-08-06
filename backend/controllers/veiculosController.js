@@ -7,7 +7,11 @@ exports.listarVeiculos = async (req, res) => {
     const [veiculos] = await pool.query(
       'SELECT * FROM veiculos WHERE ativo = 1'
     );
-    res.json(veiculos);
+    const normalizados = veiculos.map(v => ({
+      ...v,
+      valor_diaria: v.valor_diaria ? parseFloat(v.valor_diaria) : null
+    }));
+    res.json(normalizados);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao listar veículos', detalhes: err.message });
   }
@@ -42,11 +46,18 @@ exports.criarVeiculo = async (req, res) => {
     renavam,
     cor,
     numero_seguro,
-    manutencao_proxima_data
+    manutencao_proxima_data,
+    valor_diaria
   } = req.body;
   const status = req.body.status || 'disponível';
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ error: 'Status inválido' });
+  }
+  const valorDiariaNumber = parseFloat(valor_diaria);
+  if (isNaN(valorDiariaNumber) || valorDiariaNumber < 0) {
+    return res
+      .status(400)
+      .json({ error: 'valor_diaria deve ser um número não negativo' });
   }
   let foto_principal_url = null;
   let fotos_urls = null;
@@ -68,7 +79,7 @@ exports.criarVeiculo = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      'INSERT INTO veiculos (marca, modelo, ano, placa, renavam, cor, numero_seguro, status, manutencao_proxima_data, foto_principal_url, fotos_urls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO veiculos (marca, modelo, ano, placa, renavam, cor, numero_seguro, status, manutencao_proxima_data, valor_diaria, foto_principal_url, fotos_urls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         marca,
         modelo,
@@ -79,6 +90,7 @@ exports.criarVeiculo = async (req, res) => {
         numero_seguro,
         status,
         manutencao_proxima_data,
+        valor_diariaNumber,
         foto_principal_url,
         fotos_urls
       ]
@@ -94,6 +106,7 @@ exports.criarVeiculo = async (req, res) => {
       numero_seguro,
       status,
       manutencao_proxima_data,
+      valor_diaria: valorDiariaNumber,
       foto_principal_url,
       fotos_urls
     });
@@ -113,11 +126,18 @@ exports.editarVeiculo = async (req, res) => {
     renavam,
     cor,
     numero_seguro,
-    manutencao_proxima_data
+    manutencao_proxima_data,
+    valor_diaria
   } = req.body;
   const status = req.body.status || 'disponível';
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ error: 'Status inválido' });
+  }
+  const valorDiariaNumber = parseFloat(valor_diaria);
+  if (isNaN(valorDiariaNumber) || valorDiariaNumber < 0) {
+    return res
+      .status(400)
+      .json({ error: 'valor_diaria deve ser um número não negativo' });
   }
   let foto_principal_url;
   let fotos_urls;
@@ -137,7 +157,7 @@ exports.editarVeiculo = async (req, res) => {
 
   try {
     let query =
-      'UPDATE veiculos SET marca = ?, modelo = ?, ano = ?, placa = ?, renavam = ?, cor = ?, numero_seguro = ?, status = ?, manutencao_proxima_data = ?';
+      'UPDATE veiculos SET marca = ?, modelo = ?, ano = ?, placa = ?, renavam = ?, cor = ?, numero_seguro = ?, status = ?, manutencao_proxima_data = ?, valor_diaria = ?';
     const params = [
       marca,
       modelo,
@@ -147,7 +167,8 @@ exports.editarVeiculo = async (req, res) => {
       cor,
       numero_seguro,
       status,
-      manutencao_proxima_data
+      manutencao_proxima_data,
+      valorDiariaNumber
     ];
 
     if (foto_principal_url) {
@@ -174,6 +195,7 @@ exports.editarVeiculo = async (req, res) => {
       numero_seguro,
       status,
       manutencao_proxima_data,
+      valor_diaria: valorDiariaNumber,
       foto_principal_url,
       fotos_urls
     });
@@ -199,7 +221,7 @@ exports.excluirVeiculo = async (req, res) => {
 exports.atualizarStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-   if (!allowedStatuses.includes(status)) {
+  if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ error: 'Status inválido' });
   }
   try {

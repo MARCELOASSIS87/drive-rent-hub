@@ -69,7 +69,7 @@ export interface RentalRequest {
 export interface AdminLoginResponse {
   token: string;
   nome: string;
-  role: 'admin' | 'super';
+  role: 'comum' | 'super';
 }
 
 export interface DriverLoginResponse {

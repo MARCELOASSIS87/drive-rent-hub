@@ -21,20 +21,33 @@ exports.criarSolicitacao = async (req, res) => {
 };
 
 exports.listarSolicitacoes = async (req, res) => {
-  if (!req.user || !['admin', 'super'].includes(req.user.role)) {
+  if (!req.user || !['comum', 'super'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
 
   try {
     const [rows] = await pool.query(
       `SELECT s.*, 
-              m.nome AS motorista_nome, m.email AS motorista_email,
+              m.nome    AS motorista_nome, 
+              m.email   AS motorista_email,
               v.marca, v.modelo, v.placa
          FROM solicitacoes_aluguel s
          JOIN motoristas m ON s.motorista_id = m.id
-         JOIN veiculos v ON s.veiculo_id = v.id`
+         JOIN veiculos   v ON s.veiculo_id   = v.id`
     );
-    res.json(rows);
+
+    // Mapeia para aninhar veiculo e remover campos achatados
+    const formatted = rows.map(({ marca, modelo, placa, ...rest }) => ({
+      ...rest,
+      motorista: {
+        id: rest.motorista_id,
+        nome: rest.motorista_nome,
+        email: rest.motorista_email
+      },
+      veiculo: { marca, modelo, placa }
+    }));
+
+    return res.json(formatted);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar solicitações', detalhes: err.message });
   }
@@ -53,7 +66,12 @@ exports.listarMinhasSolicitacoes = async (req, res) => {
         WHERE s.motorista_id = ?`,
       [motorista_id]
     );
-    res.json(rows);
+    // Mantém marca/modelo/placa no root e adiciona veiculo aninhado
+    const formatted = rows.map(r => ({
+      ...r,
+      veiculo: { marca: r.marca, modelo: r.modelo, placa: r.placa }
+    }));
+    return res.json(formatted);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar solicitações', detalhes: err.message });
   }
@@ -63,7 +81,7 @@ exports.atualizarStatus = async (req, res) => {
   const { id } = req.params;
   const { status, motivo } = req.body;
 
-  if (!req.user || !['admin', 'super'].includes(req.user.role)) {
+  if (!req.user || !['comum', 'super'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
 

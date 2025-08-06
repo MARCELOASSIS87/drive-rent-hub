@@ -129,7 +129,7 @@ exports.listarMotoristas = async (req, res) => {
 exports.atualizarStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  if (!req.admin || !['admin', 'super'].includes(req.admin.role)) {
+  if (!req.admin || !['comum', 'super'].includes(req.admin.role)) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
   if (!['aprovado', 'recusado', 'bloqueado', 'em_analise'].includes(status)) {

@@ -125,10 +125,10 @@ export const rentalRequestsAPI = {
   create: (data: { veiculo_id: number; data_inicio: string; data_fim: string }) =>
     api.post('/solicitacoes', data),
 
-  list: () => api.get('/solicitacoes'),
+  list: () => api.get('/admin/solicitacoes'),
 
   listMine: () => api.get('/solicitacoes/mine'),
 
   updateStatus: (id: number, status: string, motivo?: string) =>
-    api.put(`/solicitacoes/${id}/status`, { status, motivo }),
+    api.put(`/admin/solicitacoes/${id}/status`, { status, motivo }),
 };

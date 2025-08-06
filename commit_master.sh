@@ -26,8 +26,8 @@ echo "📝 Realizando o commit com a mensagem: '$COMMIT_MESSAGE'"
 git commit -m "$COMMIT_MESSAGE"
 
 # 5. Envia as alterações para a branch 'master' no repositório remoto 'origin'.
-echo "🚀 Enviando alterações para a branch 'master'..."
+echo "🚀 Enviando alterações para a branch 'main'..."
 git push origin main
 
 echo "----------------------------------------" 
-echo "✅ Sucesso! Suas alterações foram enviadas para a branch 'master'."
+echo "✅ Sucesso! Suas alterações foram enviadas para a branch 'main'."

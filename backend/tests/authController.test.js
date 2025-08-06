@@ -30,7 +30,7 @@ describe('authController.login', () => {
   it('authenticates admin using senha_hash field', async () => {
     const password = 'secret';
     const hash = await bcrypt.hash(password, 10);
-    pool.query.mockResolvedValueOnce([[{ id: 1, nome: 'Admin', email: 'admin@test.com', role: 'super', senha_hash: hash }]]);
+    pool.query.mockResolvedValueOnce([[{ id: 1, nome: 'comum', email: 'admin@test.com', role: 'super', senha_hash: hash }]]);
 
     const req = { body: { email: 'admin@test.com', senha: password } };
     const res = createRes();

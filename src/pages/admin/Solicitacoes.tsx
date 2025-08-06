@@ -189,12 +189,6 @@ const Solicitacoes = () => {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{request.marca} {request.modelo}</p>
-                        <p className="text-sm text-muted-foreground">{request.placa}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
                         <p className="font-medium">{request.veiculo.marca} {request.veiculo.modelo}</p>
                         <p className="text-sm text-muted-foreground">{request.veiculo.placa}</p>
                       </div>

@@ -29,7 +29,7 @@ const Veiculos = () => {
     renavam: "",
     cor: "",
     numero_seguro: "",
-    status: "disponível",
+    status: "disponivel",
     valor_diaria: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -64,7 +64,7 @@ const Veiculos = () => {
       renavam: "",
       cor: "",
       numero_seguro: "",
-      status: "disponível",
+      status: "disponivel",
       valor_diaria: "",
 
     });
@@ -205,7 +205,7 @@ const Veiculos = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "disponível":
+      case "disponivel":
         return <Badge className="bg-green-100 text-green-800">Disponível</Badge>;
       case "em uso":
         return <Badge className="bg-blue-100 text-blue-800">Em Uso</Badge>;
@@ -341,7 +341,7 @@ const Veiculos = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="disponível">Disponível</SelectItem>
+                    <SelectItem value="disponivel">Disponível</SelectItem>
                     <SelectItem value="em uso">Em Uso</SelectItem>
                     <SelectItem value="manutenção">Manutenção</SelectItem>
                   </SelectContent>
@@ -501,7 +501,7 @@ const Veiculos = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="disponível">Disponível</SelectItem>
+                    <SelectItem value="disponivel">Disponível</SelectItem>
                     <SelectItem value="em uso">Em Uso</SelectItem>
                     <SelectItem value="manutenção">Manutenção</SelectItem>
                   </SelectContent>

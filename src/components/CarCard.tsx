@@ -75,7 +75,7 @@ export const CarCard = ({ car }: CarCardProps) => {
             className="w-full"
             disabled={car.status !== 'disponivel'}
           >
-            {car.status === 'disponivel' ? 'Solicitar Aluguel' : 'Indisponível'}
+            {car.status === 'disponivel' ? 'Solicitar Aluguel' : 'Indisponivel'}
           </Button>
         </Link>
       </CardFooter>

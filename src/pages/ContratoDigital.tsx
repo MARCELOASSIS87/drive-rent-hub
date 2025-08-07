@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,9 @@ import { Separator } from '@/components/ui/separator';
 import { FileText, Download, ArrowLeft, CheckCircle, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ContratoAluguel } from '@/types/contrato';
+import { contractsAPI } from '@/services/api';
+
+
 
 // Mock data - em produção seria puxado da API
 const mockContrato: ContratoAluguel = {
@@ -31,33 +34,7 @@ const mockContrato: ContratoAluguel = {
   status: 'pendente_assinatura'
 };
 
-const textoContrato = `
-CONTRATO DE LOCAÇÃO DE VEÍCULO
 
-1. DO OBJETO
-O presente contrato tem por objeto a locação do veículo descrito neste documento, nas condições aqui estabelecidas.
-
-2. DAS RESPONSABILIDADES DO LOCATÁRIO
-a) Utilizar o veículo com cuidado e diligência;
-b) Respeitar todas as normas de trânsito;
-c) Manter o veículo em perfeito estado de conservação;
-d) Comunicar imediatamente qualquer dano ou problema mecânico;
-e) Devolver o veículo na data e horário estabelecidos.
-
-3. DAS RESPONSABILIDADES DA LOCADORA
-a) Entregar o veículo em perfeitas condições de uso;
-b) Garantir que o veículo possui toda a documentação necessária;
-c) Prestar assistência em caso de problemas mecânicos.
-
-4. DO VALOR E PAGAMENTO
-O valor total da locação é o especificado neste contrato e deverá ser pago conforme condições acordadas.
-
-5. DAS PENALIDADES
-O descumprimento das cláusulas deste contrato implicará em multa e possível rescisão.
-
-6. DO FORO
-Fica eleito o foro da comarca local para dirimir quaisquer questões oriundas deste contrato.
-`;
 
 const ContratoDigital = () => {
   const { id } = useParams();
@@ -65,7 +42,24 @@ const ContratoDigital = () => {
   const [contrato, setContrato] = useState<ContratoAluguel>(mockContrato);
   const [showAssinarModal, setShowAssinarModal] = useState(false);
   const [isAssining, setIsAssining] = useState(false);
+  const [contractHtml, setContractHtml] = useState<string>('');
 
+  useEffect(() => {
+    const fetchContrato = async () => {
+      try {
+        const html = await contractsAPI.getById(Number(id));
+        setContractHtml(html);
+      } catch (error) {
+        toast({
+          title: 'Erro ao carregar contrato',
+          variant: 'destructive',
+        });
+      }
+    };
+    if (id) {
+      void fetchContrato();
+    }
+  }, [id, toast]);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -79,7 +73,7 @@ const ContratoDigital = () => {
 
   const handleAssinarContrato = async () => {
     setIsAssining(true);
-    
+
     // Simular chamada da API
     setTimeout(() => {
       setContrato(prev => ({
@@ -87,10 +81,10 @@ const ContratoDigital = () => {
         status: 'assinado',
         dataAssinatura: new Date().toISOString()
       }));
-      
+
       setIsAssining(false);
       setShowAssinarModal(false);
-      
+
       toast({
         title: "Contrato assinado com sucesso!",
         description: "Seu contrato foi assinado digitalmente via Gov.br",
@@ -108,7 +102,7 @@ const ContratoDigital = () => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    
+
     toast({
       title: "Download iniciado",
       description: "O contrato PDF está sendo baixado",
@@ -122,8 +116,8 @@ const ContratoDigital = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link 
-                to="/dashboard" 
+              <Link
+                to="/dashboard"
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -141,7 +135,7 @@ const ContratoDigital = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Status Badge */}
         <div className="mb-6 flex justify-center">
-          <Badge 
+          <Badge
             variant={contrato.status === 'assinado' ? 'default' : 'secondary'}
             className="text-sm px-4 py-2"
           >
@@ -235,25 +229,30 @@ const ContratoDigital = () => {
             <CardTitle>Termos e Condições</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm leading-relaxed">{textoContrato}</pre>
-            </div>
+            {contractHtml ? (
+              <div
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: contractHtml }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">Carregando contrato...</p>
+            )}
           </CardContent>
         </Card>
 
         {/* Ações */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           {contrato.status === 'pendente_assinatura' ? (
-            <Button 
+            <Button
               onClick={() => setShowAssinarModal(true)}
               size="lg"
               className="flex items-center gap-2"
             >
               <Shield className="h-5 w-5" />
-              Assinar via Gov.br
+              Li e aceito, assinar contrato
             </Button>
           ) : (
-            <Button 
+            <Button
               onClick={handleDownloadPDF}
               size="lg"
               variant="outline"
@@ -289,14 +288,14 @@ const ContratoDigital = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowAssinarModal(false)}
               disabled={isAssining}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleAssinarContrato}
               disabled={isAssining}
               className="flex items-center gap-2"

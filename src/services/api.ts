@@ -133,3 +133,11 @@ export const rentalRequestsAPI = {
   updateStatus: (id: number, status: string, motivo?: string) =>
     api.put(`/admin/solicitacoes/${id}/status`, { status, motivo }),
 };
+// Contracts API
+export const contractsAPI = {
+  // Get contract HTML by id
+  getById: async (id: number): Promise<string> => {
+    const response = await api.get<string>(`/contratos/${id}`, { responseType: 'text' });
+    return response.data;
+  },
+};

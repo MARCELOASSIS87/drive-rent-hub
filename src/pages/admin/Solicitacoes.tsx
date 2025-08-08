@@ -56,6 +56,7 @@ const Solicitacoes = () => {
         title: "Solicitação aprovada",
         description: `Solicitação de ${request.motorista.nome} foi aprovada`,
       });
+      await loadRequests();
     } catch (error: unknown) {
       toast({
         title: "Erro",
@@ -74,6 +75,7 @@ const Solicitacoes = () => {
         description: "Por favor, informe o motivo da recusa",
         variant: "destructive",
       });
+      await loadRequests();
       return;
     }
 

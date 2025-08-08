@@ -135,20 +135,10 @@ export const rentalRequestsAPI = {
 };
 // Contracts API
 export const contractsAPI = {
-  // Get contract HTML by id
-  getById: async (id: number): Promise<string> => {
-    const response = await api.get<{ html?: string } | string>(`/contratos/${id}`);
-    const { data } = response;
-    if (typeof data === 'string') {
-      return data;
-    }
-    return data.html ?? '';
-  },
-  // List contracts (admin)
-  list: () => api.get('/admin/contratos'),
-  // Download contract PDF
-  downloadPdf: (id: number) => api.get(`/contratos/${id}/pdf`, { responseType: 'blob' }),
+ 
+  list:      () => api.get('/admin/contratos'),
+  getById:   (id) => api.get(`/admin/contratos/${id}`),
+  downloadPdf: (id: number) => axios.get(`/admin/contratos/${id}/pdf`, { responseType: 'blob' }),
   sign: (id: number) => api.post(`/contratos/${id}/assinar`),
-
 };
 

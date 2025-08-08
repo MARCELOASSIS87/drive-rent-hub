@@ -21,8 +21,8 @@ const ContratoDigital = () => {
   useEffect(() => {
     const fetchContrato = async () => {
       try {
-        const html = await contractsAPI.getById(Number(id));
-        setContractHtml(html);
+        const response = await contractsAPI.getById(Number(id));
+        setContractHtml(response.data);
       } catch (error) {
         toast({
           title: 'Erro ao carregar contrato',
@@ -74,7 +74,7 @@ const ContratoDigital = () => {
   };
 
 
- const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async () => {
     try {
       const response = await contractsAPI.downloadPdf(Number(id));
       const url = window.URL.createObjectURL(response.data);

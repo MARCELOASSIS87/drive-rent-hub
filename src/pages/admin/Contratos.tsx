@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { contractsAPI } from "@/services/api";
+import { contractsAPI, api } from "@/services/api";
 import { Contract } from "@/types/backend";
 
 const Contratos = () => {
@@ -47,8 +47,8 @@ const Contratos = () => {
   const openContract = async (contract: Contract) => {
     try {
       setLoadingHtml(true);
-      const html = await contractsAPI.getById(contract.id);
-      setContractHtml(html);
+      const response = await contractsAPI.getById(contract.id);
+      setContractHtml(response.data);
       setSelectedContract(contract);
     } catch (error) {
       toast({
@@ -136,6 +136,7 @@ const Contratos = () => {
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {filtered.map((contract) => (
                   <TableRow key={contract.id}>
@@ -162,7 +163,8 @@ const Contratos = () => {
       </Card>
 
       <Dialog open={!!selectedContract} onOpenChange={closeContract}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          Contratos
           <DialogHeader>
             <DialogTitle>Contrato #{selectedContract?.id}</DialogTitle>
             <DialogDescription>Detalhes do contrato</DialogDescription>

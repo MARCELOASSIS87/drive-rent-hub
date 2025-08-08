@@ -73,25 +73,32 @@ const ContratoDigital = () => {
 
   const handleAssinarContrato = async () => {
     setIsAssining(true);
-
-    // Simular chamada da API
-    setTimeout(() => {
+    try {
+      await contractsAPI.sign(Number(id));
       setContrato(prev => ({
         ...prev,
         status: 'assinado',
-        dataAssinatura: new Date().toISOString()
+        dataAssinatura: new Date().toISOString(),
       }));
-
-      setIsAssining(false);
       setShowAssinarModal(false);
-
       toast({
         title: "Contrato assinado com sucesso!",
         description: "Seu contrato foi assinado digitalmente via Gov.br",
         variant: "default",
       });
-    }, 2000);
+    } catch (error) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Erro ao assinar contrato";
+      toast({
+        title: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssining(false);
+    }
   };
+
 
   const handleDownloadPDF = () => {
     // Simular download do PDF

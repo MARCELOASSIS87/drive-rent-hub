@@ -140,4 +140,5 @@ export const contractsAPI = {
     const response = await api.get<string>(`/contratos/${id}`, { responseType: 'text' });
     return response.data;
   },
+  sign: (id: number) => api.post(`/contratos/${id}/assinar`),
 };

@@ -10,36 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { ContratoAluguel } from '@/types/contrato';
 import { contractsAPI } from '@/services/api';
 
-
-
-// Mock data - em produção seria puxado da API
-const mockContrato: ContratoAluguel = {
-  id: 1,
-  motorista: {
-    nome: "João Silva Santos",
-    cpf: "123.456.789-10",
-    email: "joao.silva@email.com"
-  },
-  veiculo: {
-    marca: "Toyota",
-    modelo: "Corolla",
-    ano: 2023,
-    placa: "ABC-1234"
-  },
-  periodo: {
-    dataInicio: "2024-08-10",
-    dataFim: "2024-08-15"
-  },
-  valorTotal: 450.00,
-  status: 'pendente_assinatura'
-};
-
-
-
 const ContratoDigital = () => {
   const { id } = useParams();
   const { toast } = useToast();
-  const [contrato, setContrato] = useState<ContratoAluguel>(mockContrato);
+  const [contrato, setContrato] = useState<ContratoAluguel>();
   const [showAssinarModal, setShowAssinarModal] = useState(false);
   const [isAssining, setIsAssining] = useState(false);
   const [contractHtml, setContractHtml] = useState<string>('');

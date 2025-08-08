@@ -39,15 +39,18 @@ const App = () => (
             <Route path="/alugueis" element={<DriverLayout><ActiveRentals /></DriverLayout>} />
             <Route path="/rental-request/:carId" element={<DriverLayout><RentalRequest /></DriverLayout>} />
             <Route path="/contrato/:id" element={<DriverLayout><ContratoDigital /></DriverLayout>} />
-            
+
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
             <Route path="/admin/motoristas" element={<AdminLayout><Motoristas /></AdminLayout>} />
             <Route path="/admin/veiculos" element={<AdminLayout><Veiculos /></AdminLayout>} />
             <Route path="/admin/solicitacoes" element={<AdminLayout><Solicitacoes /></AdminLayout>} />
-            
+            <Route path="/admin/contratos" element={<AdminLayout><Contratos /></AdminLayout>
+            }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

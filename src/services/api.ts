@@ -137,8 +137,18 @@ export const rentalRequestsAPI = {
 export const contractsAPI = {
   // Get contract HTML by id
   getById: async (id: number): Promise<string> => {
-    const response = await api.get<string>(`/contratos/${id}`, { responseType: 'text' });
-    return response.data;
+    const response = await api.get<{ html?: string } | string>(`/contratos/${id}`);
+    const { data } = response;
+    if (typeof data === 'string') {
+      return data;
+    }
+    return data.html ?? '';
   },
+  // List contracts (admin)
+  list: () => api.get('/admin/contratos'),
+  // Download contract PDF
+  downloadPdf: (id: number) => api.get(`/contratos/${id}/pdf`, { responseType: 'blob' }),
   sign: (id: number) => api.post(`/contratos/${id}/assinar`),
+
 };
+

@@ -1,4 +1,4 @@
-import { Users, Car, FileText, LogOut } from "lucide-react";
+import { Users, Car, FileText, FileSignature, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -19,6 +19,7 @@ const items = [
   { title: "Motoristas", url: "/admin/motoristas", icon: Users },
   { title: "Veículos", url: "/admin/veiculos", icon: Car },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText },
+  { title: "Contratos", url: "/admin/contratos", icon: FileSignature },
 ];
 
 export function AdminSidebar() {

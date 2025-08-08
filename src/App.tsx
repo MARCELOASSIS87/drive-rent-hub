@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import Motoristas from "./pages/admin/Motoristas";
 import Veiculos from "./pages/admin/Veiculos";
 import Solicitacoes from "./pages/admin/Solicitacoes";
+import Contratos from "./pages/admin/Contratos";
 import ContratoDigital from "./pages/ContratoDigital";
 import DriverLayout from "./layouts/DriverLayout";
 import MyRequests from "./pages/MyRequests";

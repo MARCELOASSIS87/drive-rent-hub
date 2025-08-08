@@ -100,20 +100,26 @@ const ContratoDigital = () => {
   };
 
 
-  const handleDownloadPDF = () => {
-    // Simular download do PDF
-    const element = document.createElement('a');
-    const file = new Blob(['Contrato de Aluguel - PDF Simulado'], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `contrato-aluguel-${contrato.id}.pdf`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-
-    toast({
-      title: "Download iniciado",
-      description: "O contrato PDF está sendo baixado",
-    });
+ const handleDownloadPDF = async () => {
+    try {
+      const response = await contractsAPI.downloadPdf(Number(id));
+      const url = window.URL.createObjectURL(response.data);
+      const element = document.createElement('a');
+      element.href = url;
+      element.download = `contrato-aluguel-${contrato.id}.pdf`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      toast({
+        title: "Download iniciado",
+        description: "O contrato PDF está sendo baixado",
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao baixar PDF',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

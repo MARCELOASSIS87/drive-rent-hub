@@ -82,6 +82,17 @@ export interface DriverLoginResponse {
   };
 }
 
+export interface Contract {
+  id: number;
+  motorista_nome: string;
+  motorista_email: string;
+  veiculo_marca: string;
+  veiculo_modelo: string;
+  veiculo_placa: string;
+  data_inicio: string;
+  data_fim: string;
+  status: 'aguardando' | 'assinado';
+}
 export interface ApiError {
   error: string;
   detalhes?: string;

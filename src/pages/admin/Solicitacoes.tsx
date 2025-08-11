@@ -6,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
-import { rentalRequestsAPI } from "@/services/api";
+import { rentalRequestsAPI, contractsAPI } from "@/services/api";
 import { RentalRequest } from "@/types/backend";
 
 
@@ -20,6 +21,11 @@ const Solicitacoes = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showContractDialog, setShowContractDialog] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [bank, setBank] = useState("");
+  const [agency, setAgency] = useState("");
+  const [account, setAccount] = useState("");
+  const [pixKey, setPixKey] = useState("");
   const { toast } = useToast();
 
   const loadRequests = useCallback(async () => {
@@ -113,6 +119,43 @@ const Solicitacoes = () => {
   const showContract = (request: RentalRequest) => {
     setSelectedRequest(request);
     setShowContractDialog(true);
+  };
+  const openGenerateDialog = (request: RentalRequest) => {
+    setSelectedRequest(request);
+    setShowGenerateDialog(true);
+  };
+
+  const handleGenerateContract = async () => {
+    if (!selectedRequest) return;
+    try {
+      setActionLoading(selectedRequest.id);
+      await contractsAPI.gerar({
+        aluguel_id: selectedRequest.id,
+        banco: bank,
+        agencia: agency,
+        conta: account,
+        chave_pix: pixKey,
+      });
+      toast({
+        title: "Contrato gerado",
+        description: "Contrato gerado com sucesso",
+      });
+      setShowGenerateDialog(false);
+      setBank("");
+      setAgency("");
+      setAccount("");
+      setPixKey("");
+      setSelectedRequest(null);
+      await loadRequests();
+    } catch (error: unknown) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar contrato",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -235,7 +278,18 @@ const Solicitacoes = () => {
                             </Button>
                           </>
                         )}
-                        {request.status === 'aprovado' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openGenerateDialog(request)}
+                            disabled={actionLoading === request.id}
+                          >
+                            {actionLoading === request.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              'Gerar Contrato'
+                            )}
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -244,7 +298,7 @@ const Solicitacoes = () => {
                             <FileText className="h-4 w-4" />
                             Ver Contrato
                           </Button>
-                        )}
+                        </>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -294,6 +348,47 @@ const Solicitacoes = () => {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Confirmar Recusa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Generate Contract Dialog */}
+      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerar Contrato</DialogTitle>
+            <DialogDescription>Preencha os dados para pagamento</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="bank">Banco</Label>
+              <Input id="bank" value={bank} onChange={(e) => setBank(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="agency">Agência</Label>
+              <Input id="agency" value={agency} onChange={(e) => setAgency(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="account">Conta</Label>
+              <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pixKey">Chave Pix</Label>
+              <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowGenerateDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleGenerateContract} disabled={actionLoading === selectedRequest?.id}>
+              {actionLoading === selectedRequest?.id ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Gerar
             </Button>
           </DialogFooter>
         </DialogContent>

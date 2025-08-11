@@ -123,8 +123,18 @@ export const adminAPI = {
 };
 // Rental Requests API
 export const rentalRequestsAPI = {
-  create: (data: { veiculo_id: number; data_inicio: string; data_fim: string }) =>
-    api.post('/solicitacoes', data),
+  create: (
+    data: {
+      veiculo_id: number;
+      data_inicio: string;
+      data_fim: string;
+      nacionalidade: string;
+      estado_civil: string;
+      profissao: string;
+      rg: string;
+      endereco: string;
+    }
+  ) => api.post('/solicitacoes', data),
 
   list: () => api.get('/admin/solicitacoes'),
 
@@ -135,10 +145,12 @@ export const rentalRequestsAPI = {
 };
 // Contracts API
 export const contractsAPI = {
- 
-  list:      () => api.get('/admin/contratos'),
-  getById:   (id) => api.get(`/admin/contratos/${id}`),
+
+  list: () => api.get('/admin/contratos'),
+  getById: (id) => api.get(`/admin/contratos/${id}`),
   downloadPdf: (id: number) => axios.get(`/admin/contratos/${id}/pdf`, { responseType: 'blob' }),
   sign: (id: number) => api.post(`/contratos/${id}/assinar`),
+  gerar: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string }) =>
+    api.post('/contratos/gerar', data),
 };
 

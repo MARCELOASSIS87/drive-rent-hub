@@ -10,6 +10,8 @@ import { vehiclesAPI, rentalRequestsAPI } from "@/services/api";
 import { Vehicle } from "@/types/backend";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrencyBR } from "@/lib/utils";
+
+
 const RentalRequest = () => {
   const { carId } = useParams<{ carId: string }>();
   const navigate = useNavigate();
@@ -17,6 +19,11 @@ const RentalRequest = () => {
   const { user } = useAuth();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [maritalStatus, setMaritalStatus] = useState("");
+  const [profession, setProfession] = useState("");
+  const [rg, setRg] = useState("");
+  const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [car, setCar] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +128,12 @@ const RentalRequest = () => {
       await rentalRequestsAPI.create({
         veiculo_id: car.id,
         data_inicio: startDate,
-        data_fim: endDate
+        data_fim: endDate,
+        nacionalidade: nationality,
+        estado_civil: maritalStatus,
+        profissao: profession,
+        rg,
+        endereco: address,
       });
 
       toast({
@@ -208,6 +220,55 @@ const RentalRequest = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Nacionalidade</Label>
+                  <Input
+                    id="nationality"
+                    value={nationality}
+                    onChange={(e) => setNationality(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maritalStatus">Estado Civil</Label>
+                  <Input
+                    id="maritalStatus"
+                    value={maritalStatus}
+                    onChange={(e) => setMaritalStatus(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profession">Profissão</Label>
+                  <Input
+                    id="profession"
+                    value={profession}
+                    onChange={(e) => setProfession(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rg">RG</Label>
+                  <Input
+                    id="rg"
+                    value={rg}
+                    onChange={(e) => setRg(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Data de Início</Label>
                   <Input

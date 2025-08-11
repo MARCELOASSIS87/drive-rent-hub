@@ -1,41 +1,68 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, FileText, CreditCard, Edit, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
-import { rentalRequestsAPI, gerarContratoComFallback } from "@/services/api";
+import { rentalRequestsAPI, gerarContratoComFallback, contractsAPI } from "@/services/api";
 import { RentalRequest } from "@/types/backend";
 
-
 const Solicitacoes = () => {
-  const [requests, setRequests] = useState<RentalRequest[]>([]);
-  const [actionLoading, setActionLoading] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [showContractDialog, setShowContractDialog] = useState(false);
-  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  const [bank, setBank] = useState("");
-  const [agency, setAgency] = useState("");
-  const [account, setAccount] = useState("");
-  const [pixKey, setPixKey] = useState("");
-  const [enderecoRetirada, setEnderecoRetirada] = useState("");
-  const [enderecoDevolucao, setEnderecoDevolucao] = useState("");
   const { toast } = useToast();
+  const [requests, setRequests] = useState<RentalRequest[]>([]);
+  const [contracts, setContracts] = useState<{ [key: number]: any }>({});
+  const [loading, setLoading] = useState(true);
+  const [selectedSolicitacao, setSelectedSolicitacao] = useState<RentalRequest | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [showProposeDialog, setShowProposeDialog] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [motivoRecusa, setMotivoRecusa] = useState("");
+  const [contratoGerado, setContratoGerado] = useState<string>("");
+  const [paymentData, setPaymentData] = useState({
+    banco: "",
+    agencia: "",
+    conta: "",
+    chave_pix: "",
+    endereco_retirada: "",
+    endereco_devolucao: "",
+  });
+  const [proposeData, setProposeData] = useState({
+    banco: "",
+    agencia: "",
+    conta: "",
+    chave_pix: "",
+    endereco_retirada: "",
+    endereco_devolucao: "",
+  });
 
-  const loadRequests = useCallback(async () => {
+  const loadRequests = async () => {
     try {
       setLoading(true);
       const response = await rentalRequestsAPI.list();
-      setRequests(response.data);
-    } catch (error: unknown) {
+      const requestsData = response.data;
+      setRequests(requestsData);
+      
+      // Load contracts for approved requests
+      const contractsData: { [key: number]: any } = {};
+      for (const request of requestsData) {
+        if (request.status === 'aprovado') {
+          try {
+            const contractResponse = await contractsAPI.getContractByAluguel(request.id);
+            contractsData[request.id] = contractResponse.data;
+          } catch (error) {
+            // Contract not found for this request - that's ok
+          }
+        }
+      }
+      setContracts(contractsData);
+    } catch (error) {
       toast({
         title: "Erro",
         description: "Erro ao carregar solicitações",
@@ -44,91 +71,70 @@ const Solicitacoes = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+    void loadRequests();
+  }, []);
 
-  const handleApprove = async (request: RentalRequest) => {
+  const handleApprove = async (solicitacao: RentalRequest) => {
     try {
-      setActionLoading(request.id);
-      await rentalRequestsAPI.updateStatus(request.id, 'aprovado');
-      setRequests(prev => prev.map(req =>
-        req.id === request.id
-          ? { ...req, status: 'aprovado' as const }
-          : req
-      ));
-
+      await rentalRequestsAPI.updateStatus(solicitacao.id, 'aprovado');
       toast({
-        title: "Solicitação aprovada",
-        description: `Solicitação de ${request.motorista.nome} foi aprovada`,
+        title: "Sucesso",
+        description: "Solicitação aprovada",
       });
       await loadRequests();
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Erro",
         description: "Erro ao aprovar solicitação",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(null);
     }
   };
 
   const handleReject = async () => {
-    if (!selectedRequest || !rejectReason.trim()) {
+    if (!selectedSolicitacao || !motivoRecusa.trim()) {
       toast({
         title: "Erro",
         description: "Por favor, informe o motivo da recusa",
         variant: "destructive",
       });
-      await loadRequests();
       return;
     }
 
     try {
-      setActionLoading(selectedRequest.id);
-      await rentalRequestsAPI.updateStatus(selectedRequest.id, 'recusado', rejectReason);
-      setRequests(prev => prev.map(req =>
-        req.id === selectedRequest.id
-          ? { ...req, status: 'recusado' as const }
-          : req
-      ));
+      await rentalRequestsAPI.updateStatus(selectedSolicitacao.id, 'recusado', motivoRecusa);
       toast({
-        title: "Solicitação recusada",
-        description: `Solicitação de ${selectedRequest.motorista_nome} foi recusada`,
+        title: "Sucesso",
+        description: "Solicitação recusada",
       });
       setShowRejectDialog(false);
-      setSelectedRequest(null);
-      setRejectReason("");
-    } catch (error: unknown) {
+      setSelectedSolicitacao(null);
+      setMotivoRecusa("");
+      await loadRequests();
+    } catch (error) {
       toast({
         title: "Erro",
         description: "Erro ao recusar solicitação",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(null);
     }
   };
 
-  const openRejectDialog = (request: RentalRequest) => {
-    setSelectedRequest(request);
+  const openRejectDialog = (solicitacao: RentalRequest) => {
+    setSelectedSolicitacao(solicitacao);
     setShowRejectDialog(true);
   };
 
-  const showContract = (request: RentalRequest) => {
-    setSelectedRequest(request);
-    setShowContractDialog(true);
-  };
-  const openGenerateDialog = (request: RentalRequest) => {
-    setSelectedRequest(request);
+  const openGenerateDialog = (solicitacao: RentalRequest) => {
+    setSelectedSolicitacao(solicitacao);
     setShowGenerateDialog(true);
   };
 
   const handleGenerateContract = async () => {
-    if (!selectedRequest || !bank.trim() || !agency.trim() || !account.trim() || !pixKey.trim()) {
+    if (!selectedSolicitacao || !paymentData.banco.trim() || !paymentData.agencia.trim() || !paymentData.conta.trim() || !paymentData.chave_pix.trim()) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios",
@@ -136,38 +142,40 @@ const Solicitacoes = () => {
       });
       return;
     }
+
     try {
-      setActionLoading(selectedRequest.id);
       await gerarContratoComFallback({
-        aluguel_id: selectedRequest.id,
-        banco: bank,
-        agencia: agency,
-        conta: account,
-        chave_pix: pixKey,
-        endereco_retirada: enderecoRetirada || undefined,
-        endereco_devolucao: enderecoDevolucao || undefined,
+        aluguel_id: selectedSolicitacao.id,
+        banco: paymentData.banco,
+        agencia: paymentData.agencia,
+        conta: paymentData.conta,
+        chave_pix: paymentData.chave_pix,
+        endereco_retirada: paymentData.endereco_retirada || undefined,
+        endereco_devolucao: paymentData.endereco_devolucao || undefined,
       });
+      
       toast({
-        title: "Contrato gerado",
+        title: "Sucesso",
         description: "Contrato gerado com sucesso",
       });
+      
       setShowGenerateDialog(false);
-      setBank("");
-      setAgency("");
-      setAccount("");
-      setPixKey("");
-      setEnderecoRetirada("");
-      setEnderecoDevolucao("");
-      setSelectedRequest(null);
+      setPaymentData({
+        banco: "",
+        agencia: "",
+        conta: "",
+        chave_pix: "",
+        endereco_retirada: "",
+        endereco_devolucao: "",
+      });
+      setSelectedSolicitacao(null);
       await loadRequests();
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Erro",
         description: "Erro ao gerar contrato",
         variant: "destructive",
       });
-    } finally {
-      setActionLoading(null);
     }
   };
 
@@ -185,42 +193,44 @@ const Solicitacoes = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pendente":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
       case "aprovado":
-        return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>;
+        return <Badge variant="default">Aprovado</Badge>;
       case "recusado":
-        return <Badge className="bg-red-100 text-red-800">Recusado</Badge>;
+        return <Badge variant="destructive">Recusado</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const pendingRequests = requests.filter(req => req.status === 'pendente');
+  const filteredRequests = requests.filter(req => req.status === 'pendente');
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
       </div>
     );
   }
+
   return (
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Solicitações de Aluguel</h1>
-        <p className="text-muted-foreground">
-          Gerencie as solicitações de aluguel de veículos
-        </p>
+        <p className="text-muted-foreground">Gerencie as solicitações de aluguel de veículos</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Solicitações Pendentes</CardTitle>
           <CardDescription>
-            {pendingRequests.length} solicitação{pendingRequests.length !== 1 ? 'ões' : ''} aguardando análise
+            {filteredRequests.length} solicitação{filteredRequests.length !== 1 ? 'ões' : ''} aguardando análise
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {pendingRequests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Nenhuma solicitação pendente</p>
             </div>
@@ -237,85 +247,48 @@ const Solicitacoes = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{request.motorista_nome}</p>
-                        <p className="text-sm text-muted-foreground">{request.motorista_email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{request.veiculo.marca} {request.veiculo.modelo}</p>
-                        <p className="text-sm text-muted-foreground">{request.veiculo.placa}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p>{formatDate(request.data_inicio)} -</p>
-                        <p>{formatDate(request.data_fim)}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(request.valor_total || 0)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(request.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {request.status === 'pendente' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(request)}
-                              disabled={actionLoading === request.id}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              {actionLoading === request.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4" />
-                              )}
-                              Aprovar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => openRejectDialog(request)}
-                              disabled={actionLoading === request.id}
-                            >
-                              <XCircle className="h-4 w-4" />
-                              Recusar
-                            </Button>
-                          </>
-                        )}
-                        <>
+                {filteredRequests.map((solicitacao) => {
+                  const contract = contracts[solicitacao.id];
+                  return (
+                    <TableRow key={solicitacao.id}>
+                      <TableCell className="font-medium">{solicitacao.motorista_nome}</TableCell>
+                      <TableCell>{solicitacao.marca} {solicitacao.modelo}</TableCell>
+                      <TableCell>{formatDate(solicitacao.data_inicio)} - {formatDate(solicitacao.data_fim)}</TableCell>
+                      <TableCell>{formatCurrency(solicitacao.valor_total)}</TableCell>
+                      <TableCell>{getStatusBadge(solicitacao.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2 flex-wrap">
                           <Button
                             size="sm"
-                            onClick={() => openGenerateDialog(request)}
-                            disabled={actionLoading === request.id}
+                            variant="default"
+                            onClick={() => handleApprove(solicitacao)}
+                            disabled={solicitacao.status !== "pendente"}
                           >
-                            {actionLoading === request.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              'Gerar Contrato'
-                            )}
+                            Aprovar
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => showContract(request)}
+                            variant="destructive"
+                            onClick={() => openRejectDialog(solicitacao)}
+                            disabled={solicitacao.status !== "pendente"}
                           >
-                            <FileText className="h-4 w-4" />
-                            Ver Contrato
+                            Recusar
                           </Button>
-                        </>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {solicitacao.status === "aprovado" && !contract && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openGenerateDialog(solicitacao)}
+                            >
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Gerar Contrato
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -328,7 +301,7 @@ const Solicitacoes = () => {
           <DialogHeader>
             <DialogTitle>Recusar Solicitação</DialogTitle>
             <DialogDescription>
-              Informe o motivo da recusa para {selectedRequest?.motorista_nome}
+              Informe o motivo da recusa para {selectedSolicitacao?.motorista_nome}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -337,146 +310,91 @@ const Solicitacoes = () => {
               <Textarea
                 id="reason"
                 placeholder="Descreva o motivo da recusa..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                value={motivoRecusa}
+                onChange={(e) => setMotivoRecusa(e.target.value)}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowRejectDialog(false);
-                setRejectReason("");
-              }}
-            >
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={!rejectReason.trim() || actionLoading === selectedRequest?.id}
-            >
-              {actionLoading === selectedRequest?.id ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+            <Button variant="destructive" onClick={handleReject}>
               Confirmar Recusa
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Generate Contract Dialog */}
       <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Gerar Contrato</DialogTitle>
-            <DialogDescription>Preencha os dados para pagamento</DialogDescription>
+            <DialogDescription>Preencha os dados para pagamento e endereços</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="bank">Banco *</Label>
-              <Input id="bank" value={bank} onChange={(e) => setBank(e.target.value)} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="agency">Agência *</Label>
-              <Input id="agency" value={agency} onChange={(e) => setAgency(e.target.value)} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="account">Conta *</Label>
-              <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pixKey">Chave Pix *</Label>
-              <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="enderecoRetirada">Endereço de Retirada</Label>
+              <Label htmlFor="banco">Banco *</Label>
               <Input 
-                id="enderecoRetirada" 
-                value={enderecoRetirada} 
-                onChange={(e) => setEnderecoRetirada(e.target.value)}
+                id="banco" 
+                value={paymentData.banco} 
+                onChange={(e) => setPaymentData({ ...paymentData, banco: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="agencia">Agência *</Label>
+              <Input 
+                id="agencia" 
+                value={paymentData.agencia} 
+                onChange={(e) => setPaymentData({ ...paymentData, agencia: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="conta">Conta *</Label>
+              <Input 
+                id="conta" 
+                value={paymentData.conta} 
+                onChange={(e) => setPaymentData({ ...paymentData, conta: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="chave_pix">Chave PIX *</Label>
+              <Input 
+                id="chave_pix" 
+                value={paymentData.chave_pix} 
+                onChange={(e) => setPaymentData({ ...paymentData, chave_pix: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="endereco_retirada">Endereço de Retirada</Label>
+              <Input 
+                id="endereco_retirada" 
+                value={paymentData.endereco_retirada} 
+                onChange={(e) => setPaymentData({ ...paymentData, endereco_retirada: e.target.value })}
                 placeholder="Recomendado - informe o endereço para constar no contrato"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="enderecoDevolucao">Endereço de Devolução</Label>
+              <Label htmlFor="endereco_devolucao">Endereço de Devolução</Label>
               <Input 
-                id="enderecoDevolucao" 
-                value={enderecoDevolucao} 
-                onChange={(e) => setEnderecoDevolucao(e.target.value)}
+                id="endereco_devolucao" 
+                value={paymentData.endereco_devolucao} 
+                onChange={(e) => setPaymentData({ ...paymentData, endereco_devolucao: e.target.value })}
                 placeholder="Recomendado - informe o endereço para constar no contrato"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowGenerateDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleGenerateContract} 
-              disabled={actionLoading === selectedRequest?.id || !bank.trim() || !agency.trim() || !account.trim() || !pixKey.trim()}
-            >
-              {actionLoading === selectedRequest?.id ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+            <Button onClick={handleGenerateContract}>
               Gerar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Contract Dialog */}
-      <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Contrato Digital</DialogTitle>
-            <DialogDescription>
-              Contrato de locação de veículo
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">CONTRATO DE LOCAÇÃO DE VEÍCULO</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <strong>Locatário:</strong> {selectedRequest?.motorista_nome}<br />
-                  <strong>E-mail:</strong> {selectedRequest?.motorista_email}
-                </div>
-
-                <div>
-                  <strong>Veículo:</strong> {selectedRequest?.marca} {selectedRequest?.modelo}<br />
-                  <strong>Placa:</strong> {selectedRequest?.placa}
-                </div>
-
-                <div>
-                  <strong>Período:</strong> {selectedRequest && formatDate(selectedRequest.data_inicio)} até {selectedRequest && formatDate(selectedRequest.data_fim)}<br />
-                  <strong>Valor Total:</strong> {selectedRequest && formatCurrency(selectedRequest.valor_total)}
-                </div>
-
-                <div className="mt-6 p-4 bg-background rounded border">
-                  <p className="text-sm text-muted-foreground">
-                    Este é um contrato digital gerado automaticamente.
-                    O locatário concorda com os termos e condições de locação
-                    estabelecidos pela empresa.
-                  </p>
-                </div>
-
-                <div className="text-center mt-6">
-                  <p className="text-sm font-medium">Status: Aprovado</p>
-                  <p className="text-xs text-muted-foreground">
-                    Contrato gerado em {new Date().toLocaleDateString("pt-BR")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShowContractDialog(false)}>
-              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

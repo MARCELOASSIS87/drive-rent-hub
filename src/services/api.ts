@@ -153,6 +153,27 @@ export const contractsAPI = {
     api.post('/contratos/gerar', data),
   gerarAdmin: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string }) =>
     api.post('/admin/contratos/gerar', data),
+  
+  // Get contract by rental request ID
+  getContractByAluguel: (aluguelId: number) => api.get(`/contratos/by-aluguel/${aluguelId}`),
+  
+  // Get contract JSON data for pre-filling forms
+  getContractJson: (id: number) => api.get(`/contratos/${id}/json`),
+  
+  // List contract revisions
+  listRevisions: (id: number) => api.get(`/contratos/${id}/revisoes`),
+  
+  // Propose contract revision
+  proposeRevision: (id: number, payload: any) => api.post(`/contratos/${id}/propor`, payload),
+  
+  // Accept revision
+  acceptRevision: (id: number, revId: number) => api.post(`/contratos/${id}/revisoes/${revId}/aceitar`),
+  
+  // Reject revision
+  rejectRevision: (id: number, revId: number) => api.post(`/contratos/${id}/revisoes/${revId}/rejeitar`),
+  
+  // Finalize negotiation
+  finalizeNegotiation: (id: number) => api.post(`/contratos/${id}/finalizar-negociacao`),
 };
 
 // Helper with fallback for contract generation

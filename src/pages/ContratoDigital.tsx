@@ -229,7 +229,7 @@ const ContratoDigital = () => {
 
         {/* Ações */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {contrato.status === 'pendente_assinatura' ? (
+          {contrato.status === 'pronto_para_assinatura' ? (
             <Button
               onClick={() => setShowAssinarModal(true)}
               size="lg"

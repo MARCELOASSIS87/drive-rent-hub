@@ -16,6 +16,6 @@ export interface ContratoAluguel {
     dataFim: string;
   };
   valorTotal: number;
-  status: 'pendente_assinatura' | 'assinado' | 'cancelado';
+  status: 'pendente_assinatura' | 'pronto_para_assinatura' | 'assinado' | 'cancelado';
   dataAssinatura?: string;
 }

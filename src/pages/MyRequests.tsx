@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { rentalRequestsAPI } from "@/services/api";
 import { RentalRequest } from "@/types/backend";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +34,19 @@ const MyRequests = () => {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pendente":
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Em análise</Badge>;
+      case "aprovado":
+        return <Badge variant="default" className="bg-green-100 text-green-800">Aprovado</Badge>;
+      case "recusado":
+        return <Badge variant="destructive">Recusado</Badge>;
+      default:
+        return <Badge variant="secondary" className="capitalize">{status}</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -63,7 +77,7 @@ const MyRequests = () => {
               <TableRow key={req.id}>
                 <TableCell>{req.marca} {req.modelo} ({req.placa})</TableCell>
                 <TableCell>{formatDate(req.data_inicio)} - {formatDate(req.data_fim)}</TableCell>
-                <TableCell className="capitalize">{req.status}</TableCell>
+                <TableCell>{getStatusBadge(req.status)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

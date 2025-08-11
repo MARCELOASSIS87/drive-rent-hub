@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, FileText, Loader2 } from "lucide-react";
-import { rentalRequestsAPI, contractsAPI } from "@/services/api";
+import { rentalRequestsAPI, gerarContratoComFallback } from "@/services/api";
 import { RentalRequest } from "@/types/backend";
 
 
@@ -26,6 +26,8 @@ const Solicitacoes = () => {
   const [agency, setAgency] = useState("");
   const [account, setAccount] = useState("");
   const [pixKey, setPixKey] = useState("");
+  const [enderecoRetirada, setEnderecoRetirada] = useState("");
+  const [enderecoDevolucao, setEnderecoDevolucao] = useState("");
   const { toast } = useToast();
 
   const loadRequests = useCallback(async () => {
@@ -126,15 +128,24 @@ const Solicitacoes = () => {
   };
 
   const handleGenerateContract = async () => {
-    if (!selectedRequest) return;
+    if (!selectedRequest || !bank.trim() || !agency.trim() || !account.trim() || !pixKey.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       setActionLoading(selectedRequest.id);
-      await contractsAPI.gerar({
+      await gerarContratoComFallback({
         aluguel_id: selectedRequest.id,
         banco: bank,
         agencia: agency,
         conta: account,
         chave_pix: pixKey,
+        endereco_retirada: enderecoRetirada || undefined,
+        endereco_devolucao: enderecoDevolucao || undefined,
       });
       toast({
         title: "Contrato gerado",
@@ -145,6 +156,8 @@ const Solicitacoes = () => {
       setAgency("");
       setAccount("");
       setPixKey("");
+      setEnderecoRetirada("");
+      setEnderecoDevolucao("");
       setSelectedRequest(null);
       await loadRequests();
     } catch (error: unknown) {
@@ -361,20 +374,38 @@ const Solicitacoes = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="bank">Banco</Label>
-              <Input id="bank" value={bank} onChange={(e) => setBank(e.target.value)} />
+              <Label htmlFor="bank">Banco *</Label>
+              <Input id="bank" value={bank} onChange={(e) => setBank(e.target.value)} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="agency">Agência</Label>
-              <Input id="agency" value={agency} onChange={(e) => setAgency(e.target.value)} />
+              <Label htmlFor="agency">Agência *</Label>
+              <Input id="agency" value={agency} onChange={(e) => setAgency(e.target.value)} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="account">Conta</Label>
-              <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} />
+              <Label htmlFor="account">Conta *</Label>
+              <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="pixKey">Chave Pix</Label>
-              <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} />
+              <Label htmlFor="pixKey">Chave Pix *</Label>
+              <Input id="pixKey" value={pixKey} onChange={(e) => setPixKey(e.target.value)} required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="enderecoRetirada">Endereço de Retirada</Label>
+              <Input 
+                id="enderecoRetirada" 
+                value={enderecoRetirada} 
+                onChange={(e) => setEnderecoRetirada(e.target.value)}
+                placeholder="Recomendado - informe o endereço para constar no contrato"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="enderecoDevolucao">Endereço de Devolução</Label>
+              <Input 
+                id="enderecoDevolucao" 
+                value={enderecoDevolucao} 
+                onChange={(e) => setEnderecoDevolucao(e.target.value)}
+                placeholder="Recomendado - informe o endereço para constar no contrato"
+              />
             </div>
           </div>
           <DialogFooter>
@@ -384,7 +415,10 @@ const Solicitacoes = () => {
             >
               Cancelar
             </Button>
-            <Button onClick={handleGenerateContract} disabled={actionLoading === selectedRequest?.id}>
+            <Button 
+              onClick={handleGenerateContract} 
+              disabled={actionLoading === selectedRequest?.id || !bank.trim() || !agency.trim() || !account.trim() || !pixKey.trim()}
+            >
               {actionLoading === selectedRequest?.id ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}

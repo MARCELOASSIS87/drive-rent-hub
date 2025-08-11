@@ -53,6 +53,13 @@ export interface RentalRequest {
   valor_total: number;
   status: "pendente" | "aprovado" | "recusado";
 
+  // Dados pessoais do motorista
+  nacionalidade?: string;
+  estado_civil?: string;
+  profissao?: string;
+  rg?: string;
+  endereco?: string;
+
   // Se o back já te devolve o objeto inteiro, pode aninhar:
   motorista?: {
     nome: string;
@@ -91,7 +98,7 @@ export interface Contract {
   veiculo_placa: string;
   data_inicio: string;
   data_fim: string;
-  status: 'aguardando' | 'assinado';
+  status: 'aguardando' | 'assinado' | 'pendente_motorista' | 'pendente_admin' | 'pronto_para_assinatura';
 }
 export interface ApiError {
   error: string;

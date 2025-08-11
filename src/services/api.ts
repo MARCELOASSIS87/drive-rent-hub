@@ -149,9 +149,9 @@ export const contractsAPI = {
   getById: (id) => api.get(`/admin/contratos/${id}`),
   downloadPdf: (id: number) => axios.get(`/admin/contratos/${id}/pdf`, { responseType: 'blob' }),
   sign: (id: number) => api.post(`/contratos/${id}/assinar`),
-  gerar: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string }) =>
+  gerar: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string; nacionalidade?: string; estado_civil?: string; profissao?: string; rg?: string; endereco?: string }) =>
     api.post('/contratos/gerar', data),
-  gerarAdmin: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string }) =>
+  gerarAdmin: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string; nacionalidade?: string; estado_civil?: string; profissao?: string; rg?: string; endereco?: string }) =>
     api.post('/admin/contratos/gerar', data),
   
   // Get contract by rental request ID
@@ -177,7 +177,20 @@ export const contractsAPI = {
 };
 
 // Helper with fallback for contract generation
-export async function gerarContratoComFallback(payload: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string }) {
+export async function gerarContratoComFallback(payload: { 
+  aluguel_id: number; 
+  banco: string; 
+  agencia: string; 
+  conta: string; 
+  chave_pix: string; 
+  endereco_retirada?: string; 
+  endereco_devolucao?: string;
+  nacionalidade?: string;
+  estado_civil?: string;
+  profissao?: string;
+  rg?: string;
+  endereco?: string;
+}) {
   try {
     return await contractsAPI.gerar(payload);
   } catch (err) {

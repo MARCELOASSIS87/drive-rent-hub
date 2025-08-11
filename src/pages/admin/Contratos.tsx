@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, Download } from "lucide-react";
+import { Loader2, FileText, Download, Edit, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { contractsAPI, api } from "@/services/api";
 import { Contract } from "@/types/backend";
@@ -43,6 +43,95 @@ const Contratos = () => {
     : contracts.filter(c => c.status === statusFilter);
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString("pt-BR");
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'assinado': return 'default';
+      case 'pronto_para_assinatura': return 'secondary';
+      case 'pendente_admin': return 'destructive';
+      case 'pendente_motorista': return 'outline';
+      default: return 'secondary';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'aguardando': return 'Aguardando';
+      case 'pendente_motorista': return 'Pendente Motorista';
+      case 'pendente_admin': return 'Pendente Admin';
+      case 'pronto_para_assinatura': return 'Pronto para Assinatura';
+      case 'assinado': return 'Assinado';
+      default: return status;
+    }
+  };
+
+  const handleProposeRevision = async (contract: Contract) => {
+    // Implementar lógica similar ao Solicitacoes.tsx
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "Use a página de Solicitações para gerenciar negociações",
+    });
+  };
+
+  const handleRevisionAction = async (contractId: number, action: 'accept' | 'reject') => {
+    try {
+      const revisionsResponse = await contractsAPI.listRevisions(contractId);
+      const pendingRevision = revisionsResponse.data.find((r: any) => r.status === 'pendente');
+      
+      if (!pendingRevision) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma revisão pendente encontrada",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (action === 'accept') {
+        await contractsAPI.acceptRevision(contractId, pendingRevision.id);
+        toast({
+          title: "Sucesso",
+          description: "Revisão aceita",
+        });
+      } else {
+        await contractsAPI.rejectRevision(contractId, pendingRevision.id);
+        toast({
+          title: "Sucesso",
+          description: "Revisão rejeitada",
+        });
+      }
+
+      // Recarregar contratos
+      const response = await contractsAPI.list();
+      setContracts(response.data);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao ${action === 'accept' ? 'aceitar' : 'rejeitar'} revisão`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFinalizeNegotiation = async (contractId: number) => {
+    try {
+      await contractsAPI.finalizeNegotiation(contractId);
+      toast({
+        title: "Sucesso",
+        description: "Negociação finalizada - contrato pronto para assinatura",
+      });
+      
+      // Recarregar contratos
+      const response = await contractsAPI.list();
+      setContracts(response.data);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao finalizar negociação",
+        variant: "destructive",
+      });
+    }
+  };
 
   const openContract = async (contract: Contract) => {
     try {
@@ -115,6 +204,9 @@ const Contratos = () => {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="aguardando">Aguardando</SelectItem>
+                <SelectItem value="pendente_motorista">Pendente Motorista</SelectItem>
+                <SelectItem value="pendente_admin">Pendente Admin</SelectItem>
+                <SelectItem value="pronto_para_assinatura">Pronto para Assinatura</SelectItem>
                 <SelectItem value="assinado">Assinado</SelectItem>
               </SelectContent>
             </Select>
@@ -144,15 +236,40 @@ const Contratos = () => {
                     <TableCell>{contract.veiculo_marca} {contract.veiculo_modelo}</TableCell>
                     <TableCell>{formatDate(contract.data_inicio)} - {formatDate(contract.data_fim)}</TableCell>
                     <TableCell>
-                      <Badge variant={contract.status === 'assinado' ? 'default' : 'secondary'}>
-                        {contract.status === 'assinado' ? 'Assinado' : 'Aguardando'}
+                      <Badge variant={getStatusVariant(contract.status)}>
+                        {getStatusLabel(contract.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" onClick={() => openContract(contract)}>
-                        <FileText className="h-4 w-4" />
-                        Ver
-                      </Button>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button size="sm" variant="outline" onClick={() => openContract(contract)}>
+                          <FileText className="h-4 w-4" />
+                          Ver
+                        </Button>
+                        {(contract.status === 'aguardando' || contract.status === 'pendente_motorista') && (
+                          <Button size="sm" variant="secondary" onClick={() => handleProposeRevision(contract)}>
+                            <Edit className="h-4 w-4" />
+                            Propor Alteração
+                          </Button>
+                        )}
+                        {contract.status === 'pendente_admin' && (
+                          <>
+                            <Button size="sm" variant="default" onClick={() => handleRevisionAction(contract.id, 'accept')}>
+                              <Check className="h-4 w-4" />
+                              Aceitar
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleRevisionAction(contract.id, 'reject')}>
+                              <X className="h-4 w-4" />
+                              Rejeitar
+                            </Button>
+                          </>
+                        )}
+                        {(contract.status === 'aguardando' || contract.status === 'pendente_motorista') && (
+                          <Button size="sm" variant="default" onClick={() => handleFinalizeNegotiation(contract.id)}>
+                            Finalizar
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -152,6 +152,12 @@ const Solicitacoes = () => {
         chave_pix: paymentData.chave_pix,
         endereco_retirada: paymentData.endereco_retirada || undefined,
         endereco_devolucao: paymentData.endereco_devolucao || undefined,
+        // Incluir dados pessoais do motorista da solicitação
+        nacionalidade: selectedSolicitacao.nacionalidade,
+        estado_civil: selectedSolicitacao.estado_civil,
+        profissao: selectedSolicitacao.profissao,
+        rg: selectedSolicitacao.rg,
+        endereco: selectedSolicitacao.endereco,
       });
       
       toast({
@@ -203,7 +209,155 @@ const Solicitacoes = () => {
     }
   };
 
-  const filteredRequests = requests.filter(req => req.status === 'pendente');
+  // Função para abrir preview do contrato
+  const openContractPreview = async (contract: any) => {
+    try {
+      const response = await contractsAPI.getById(contract.id);
+      setContratoGerado(response.data);
+      setSelectedContract(contract);
+      setShowContractDialog(true);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar contrato",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para abrir modal de proposta de alteração
+  const openProposeDialog = async (contract: any) => {
+    try {
+      // Buscar dados atuais do contrato para pré-preencher
+      const response = await contractsAPI.getContractJson(contract.id);
+      const contractData = response.data;
+      
+      setProposeData({
+        banco: contractData.banco || "",
+        agencia: contractData.agencia || "",
+        conta: contractData.conta || "",
+        chave_pix: contractData.chave_pix || "",
+        endereco_retirada: contractData.endereco_retirada || "",
+        endereco_devolucao: contractData.endereco_devolucao || "",
+      });
+      
+      setSelectedContract(contract);
+      setShowProposeDialog(true);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados do contrato",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para enviar proposta de alteração
+  const handleProposeRevision = async () => {
+    if (!selectedContract || !proposeData.banco.trim() || !proposeData.agencia.trim() || !proposeData.conta.trim() || !proposeData.chave_pix.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await contractsAPI.proposeRevision(selectedContract.id, {
+        tipo: 'admin',
+        banco: proposeData.banco,
+        agencia: proposeData.agencia,
+        conta: proposeData.conta,
+        chave_pix: proposeData.chave_pix,
+        endereco_retirada: proposeData.endereco_retirada || undefined,
+        endereco_devolucao: proposeData.endereco_devolucao || undefined,
+      });
+
+      toast({
+        title: "Sucesso",
+        description: "Proposta de alteração enviada",
+      });
+
+      setShowProposeDialog(false);
+      setSelectedContract(null);
+      setProposeData({
+        banco: "",
+        agencia: "",
+        conta: "",
+        chave_pix: "",
+        endereco_retirada: "",
+        endereco_devolucao: "",
+      });
+      await loadRequests();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar proposta",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para aceitar/rejeitar revisão
+  const handleRevisionAction = async (contractId: number, action: 'accept' | 'reject') => {
+    try {
+      // Buscar revisões pendentes
+      const revisionsResponse = await contractsAPI.listRevisions(contractId);
+      const pendingRevision = revisionsResponse.data.find((r: any) => r.status === 'pendente');
+      
+      if (!pendingRevision) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma revisão pendente encontrada",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (action === 'accept') {
+        await contractsAPI.acceptRevision(contractId, pendingRevision.id);
+        toast({
+          title: "Sucesso",
+          description: "Revisão aceita",
+        });
+      } else {
+        await contractsAPI.rejectRevision(contractId, pendingRevision.id);
+        toast({
+          title: "Sucesso",
+          description: "Revisão rejeitada",
+        });
+      }
+
+      await loadRequests();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao ${action === 'accept' ? 'aceitar' : 'rejeitar'} revisão`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para finalizar negociação
+  const handleFinalizeNegotiation = async (contractId: number) => {
+    try {
+      await contractsAPI.finalizeNegotiation(contractId);
+      toast({
+        title: "Sucesso",
+        description: "Negociação finalizada - contrato pronto para assinatura",
+      });
+      await loadRequests();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao finalizar negociação",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredRequests = requests.filter(req => req.status === 'pendente' || req.status === 'aprovado');
 
   if (loading) {
     return (
@@ -224,15 +378,15 @@ const Solicitacoes = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Solicitações Pendentes</CardTitle>
+          <CardTitle>Solicitações e Contratos</CardTitle>
           <CardDescription>
-            {filteredRequests.length} solicitação{filteredRequests.length !== 1 ? 'ões' : ''} aguardando análise
+            {requests.filter(r => r.status === 'pendente').length} pendente{requests.filter(r => r.status === 'pendente').length !== 1 ? 's' : ''} • {requests.filter(r => r.status === 'aprovado').length} aprovada{requests.filter(r => r.status === 'aprovado').length !== 1 ? 's' : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredRequests.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Nenhuma solicitação pendente</p>
+              <p className="text-muted-foreground">Nenhuma solicitação encontrada</p>
             </div>
           ) : (
             <Table>
@@ -283,6 +437,57 @@ const Solicitacoes = () => {
                               <CreditCard className="h-4 w-4 mr-2" />
                               Gerar Contrato
                             </Button>
+                          )}
+                          {solicitacao.status === "aprovado" && contract && (
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openContractPreview(contract)}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Ver Contrato
+                              </Button>
+                              {(contract.status === 'aguardando' || contract.status === 'pendente_motorista') && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => openProposeDialog(contract)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Propor Alteração
+                                </Button>
+                              )}
+                              {contract.status === 'pendente_admin' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleRevisionAction(contract.id, 'accept')}
+                                  >
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Aceitar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleRevisionAction(contract.id, 'reject')}
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Rejeitar
+                                  </Button>
+                                </>
+                              )}
+                              {(contract.status === 'aguardando' || contract.status === 'pendente_motorista') && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleFinalizeNegotiation(contract.id)}
+                                >
+                                  Finalizar Negociação
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </TableCell>
@@ -395,6 +600,93 @@ const Solicitacoes = () => {
             </Button>
             <Button onClick={handleGenerateContract}>
               Gerar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contract Preview Dialog */}
+      <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Contrato #{selectedContract?.id}</DialogTitle>
+            <DialogDescription>Visualização do contrato</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: contratoGerado }} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Propose Revision Dialog */}
+      <Dialog open={showProposeDialog} onOpenChange={setShowProposeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Propor Alteração no Contrato</DialogTitle>
+            <DialogDescription>Altere os dados de pagamento e endereços</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="propose_banco">Banco *</Label>
+              <Input 
+                id="propose_banco" 
+                value={proposeData.banco} 
+                onChange={(e) => setProposeData({ ...proposeData, banco: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="propose_agencia">Agência *</Label>
+              <Input 
+                id="propose_agencia" 
+                value={proposeData.agencia} 
+                onChange={(e) => setProposeData({ ...proposeData, agencia: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="propose_conta">Conta *</Label>
+              <Input 
+                id="propose_conta" 
+                value={proposeData.conta} 
+                onChange={(e) => setProposeData({ ...proposeData, conta: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="propose_chave_pix">Chave PIX *</Label>
+              <Input 
+                id="propose_chave_pix" 
+                value={proposeData.chave_pix} 
+                onChange={(e) => setProposeData({ ...proposeData, chave_pix: e.target.value })} 
+                required 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="propose_endereco_retirada">Endereço de Retirada</Label>
+              <Input 
+                id="propose_endereco_retirada" 
+                value={proposeData.endereco_retirada} 
+                onChange={(e) => setProposeData({ ...proposeData, endereco_retirada: e.target.value })}
+                placeholder="Endereço de retirada do veículo"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="propose_endereco_devolucao">Endereço de Devolução</Label>
+              <Input 
+                id="propose_endereco_devolucao" 
+                value={proposeData.endereco_devolucao} 
+                onChange={(e) => setProposeData({ ...proposeData, endereco_devolucao: e.target.value })}
+                placeholder="Endereço de devolução do veículo"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProposeDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleProposeRevision}>
+              Enviar Proposta
             </Button>
           </DialogFooter>
         </DialogContent>

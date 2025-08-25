@@ -153,37 +153,57 @@ export const contractsAPI = {
     api.post('/contratos/gerar', data),
   gerarAdmin: (data: { aluguel_id: number; banco: string; agencia: string; conta: string; chave_pix: string; endereco_retirada?: string; endereco_devolucao?: string; nacionalidade?: string; estado_civil?: string; profissao?: string; rg?: string; endereco?: string }) =>
     api.post('/admin/contratos/gerar', data),
-  
+
   // Get contract by rental request ID
   getContractByAluguel: (aluguelId: number) => api.get(`/contratos/by-aluguel/${aluguelId}`),
-  
+
   // Get contract JSON data for pre-filling forms
   getContractJson: (id: number) => api.get(`/contratos/${id}/json`),
-  
+
+  // preview de revisão (gera contrato com alterações sem salvar)
+  previewRevision(contratoId: number, revisaoId: number) {
+    const url = `/contratos/${contratoId}/revisoes/${revisaoId}/preview`;
+    console.log('[contractsAPI] GET', url);
+    return api.get(url);
+  },
+  finalize(contractId: number) {
+  const url = `/contratos/${contractId}/finalizar`;
+  console.log('[contractsAPI] POST', url);
+  return api.post(url);
+},
+
   // List contract revisions
   listRevisions: (id: number) => api.get(`/contratos/${id}/revisoes`),
-  
+
   // Propose contract revision
-  proposeRevision: (id: number, payload: any) => api.post(`/contratos/${id}/propor`, payload),
-  
-  // Accept revision
-  acceptRevision: (id: number, revId: number) => api.post(`/contratos/${id}/revisoes/${revId}/aceitar`),
-  
-  // Reject revision
-  rejectRevision: (id: number, revId: number) => api.post(`/contratos/${id}/revisoes/${revId}/rejeitar`),
-  
+  proposeRevision: (id: number, payload: unknown) => api.post(`/contratos/${id}/propor`, payload),
+
+  // aceitar revisão: POST /contratos/:id/revisoes/:revId/aceitar
+  acceptRevision(contratoId: number, revisaoId: number) {
+    const url = `/contratos/${contratoId}/revisoes/${revisaoId}/aceitar`;
+    console.log('[contractsAPI] POST', url);
+    return api.post(url);
+  },
+
+  // rejeitar revisão: POST /contratos/:id/revisoes/:revId/rejeitar
+  rejectRevision(contratoId: number, revisaoId: number) {
+    const url = `/contratos/${contratoId}/revisoes/${revisaoId}/rejeitar`;
+    console.log('[contractsAPI] POST', url);
+    return api.post(url);
+  },
+
   // Finalize negotiation
   finalizeNegotiation: (id: number) => api.post(`/contratos/${id}/finalizar-negociacao`),
 };
 
 // Helper with fallback for contract generation
-export async function gerarContratoComFallback(payload: { 
-  aluguel_id: number; 
-  banco: string; 
-  agencia: string; 
-  conta: string; 
-  chave_pix: string; 
-  endereco_retirada?: string; 
+export async function gerarContratoComFallback(payload: {
+  aluguel_id: number;
+  banco: string;
+  agencia: string;
+  conta: string;
+  chave_pix: string;
+  endereco_retirada?: string;
   endereco_devolucao?: string;
   nacionalidade?: string;
   estado_civil?: string;

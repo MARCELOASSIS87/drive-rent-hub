@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,9 @@ import { Contract } from "@/types/backend";
 
 const Contratos = () => {
   const { toast } = useToast();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -64,7 +68,23 @@ const Contratos = () => {
       default: return status;
     }
   };
-
+  async function handlePreview(contratoId: number, revisaoId: number) {
+    try {
+      setLoadingPreview(true);
+      const { data } = await contractsAPI.previewRevision(contratoId, revisaoId);
+      if (!data?.ok) throw new Error("Resposta inválida do preview");
+      setPreviewHtml(data.html || "");
+      setPreviewOpen(true);
+    } catch (err: unknown) {
+      console.error("[preview] erro:", err);
+      toast({
+        title: "Erro ao gerar pré-visualização",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPreview(false);
+    }
+  }
   const handleProposeRevision = async (contract: Contract) => {
     // Implementar lógica similar ao Solicitacoes.tsx
     toast({
@@ -72,12 +92,39 @@ const Contratos = () => {
       description: "Use a página de Solicitações para gerenciar negociações",
     });
   };
+  async function handlePreviewPending(contractId: number) {
+    try {
+      setLoadingPreview(true);
+      const revisionsResponse = await contractsAPI.listRevisions(contractId);
+      const pendingRevision = revisionsResponse.data.find((r: any) => r.status === 'pendente');
+
+      if (!pendingRevision) {
+        toast({
+          title: "Sem revisão pendente",
+          description: "Não há proposta de alteração para este contrato.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // reaproveita seu handler existente
+      await handlePreview(contractId, pendingRevision.id);
+    } catch (err) {
+      console.error("[previewPending] erro:", err);
+      toast({
+        title: "Erro ao gerar pré-visualização",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPreview(false);
+    }
+  }
 
   const handleRevisionAction = async (contractId: number, action: 'accept' | 'reject') => {
     try {
       const revisionsResponse = await contractsAPI.listRevisions(contractId);
       const pendingRevision = revisionsResponse.data.find((r: any) => r.status === 'pendente');
-      
+
       if (!pendingRevision) {
         toast({
           title: "Erro",
@@ -113,25 +160,17 @@ const Contratos = () => {
     }
   };
 
-  const handleFinalizeNegotiation = async (contractId: number) => {
-    try {
-      await contractsAPI.finalizeNegotiation(contractId);
-      toast({
-        title: "Sucesso",
-        description: "Negociação finalizada - contrato pronto para assinatura",
-      });
-      
-      // Recarregar contratos
-      const response = await contractsAPI.list();
-      setContracts(response.data);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao finalizar negociação",
-        variant: "destructive",
-      });
-    }
-  };
+  const handleFinalizeContract = async (contractId: number) => {
+  try {
+    await contractsAPI.finalize(contractId);
+    toast({ title: "Sucesso", description: "Contrato pronto para assinatura" });
+    const response = await contractsAPI.list();
+    setContracts(response.data);
+  } catch {
+    toast({ title: "Erro", description: "Erro ao finalizar contrato", variant: "destructive" });
+  }
+};
+
 
   const openContract = async (contract: Contract) => {
     try {
@@ -262,10 +301,19 @@ const Contratos = () => {
                               <X className="h-4 w-4" />
                               Rejeitar
                             </Button>
+                            <Button
+                              onClick={() => handlePreviewPending(contract.id)}
+                              disabled={loadingPreview}
+                              variant="outline"
+                            >
+                              {loadingPreview ? "Gerando..." : "Pré-visualizar"}
+                            </Button>
+
+
                           </>
                         )}
                         {(contract.status === 'aguardando' || contract.status === 'pendente_motorista') && (
-                          <Button size="sm" variant="default" onClick={() => handleFinalizeNegotiation(contract.id)}>
+                          <Button size="sm" variant="default" onClick={() => handleFinalizeContract(contract.id)}>
                             Finalizar
                           </Button>
                         )}
@@ -303,6 +351,43 @@ const Contratos = () => {
           )}
         </DialogContent>
       </Dialog>
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setPreviewOpen(false)}
+          />
+          {/* content */}
+          <div className="relative z-10 bg-white w-[95vw] max-w-4xl max-h-[85vh] rounded-xl shadow-xl border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+              <h2 className="font-semibold text-base">Pré-visualização do contrato</h2>
+              <button
+                className="px-2 py-1 text-sm border rounded-md hover:bg-gray-50"
+                onClick={() => setPreviewOpen(false)}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="p-4 overflow-auto" style={{ maxHeight: "70vh" }}>
+              {previewHtml
+                ? <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                : <p className="text-sm text-gray-500">Sem conteúdo para pré-visualizar.</p>}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t bg-gray-50">
+              <button
+                className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-100"
+                onClick={() => setPreviewOpen(false)}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -62,24 +62,34 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--gradient-hero)' }}>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4" 
+      style={{ 
+        background: 'linear-gradient(135deg, #DAEDF3 0%, #F8FCFD 50%, #E8F4F8 100%)'
+      }}
+    >
       <div className="w-full max-w-md space-y-6">
         {/* Logo e título */}
-        <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg">
-            <Car className="h-8 w-8 text-primary-foreground" />
+        <div className="text-center space-y-6">
+          <div className="mx-auto">
+            <img 
+              src="/logo-locpocos.png" 
+              alt="LocPoços — Locação de Veículos" 
+              className="h-16 w-auto mx-auto"
+            />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">RentCar Pro</h1>
-            <p className="text-muted-foreground">Aluguel de carros para motoristas</p>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold" style={{ color: '#122447' }}>LocPoços</h1>
+            <p className="text-lg font-medium" style={{ color: '#347BA7' }}>Locação de Veículos</p>
+            <p className="text-sm text-muted-foreground">Aluguel profissional para motoristas</p>
           </div>
         </div>
 
         {/* Formulário de Login */}
-        <Card className="shadow-lg border-0" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold text-center">Entrar</CardTitle>
-            <p className="text-sm text-muted-foreground text-center">
+        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm" style={{ boxShadow: '0 20px 40px rgba(18, 36, 71, 0.15)' }}>
+          <CardHeader className="space-y-3 pb-6">
+            <CardTitle className="text-2xl font-bold text-center" style={{ color: '#122447' }}>Entrar</CardTitle>
+            <p className="text-sm text-center" style={{ color: '#347BA7' }}>
               Acesse sua conta para gerenciar seus aluguéis
             </p>
           </CardHeader>
@@ -118,7 +128,8 @@ const LoginForm = () => {
               <div className="flex justify-end">
                 <Link 
                   to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm hover:underline transition-colors"
+                  style={{ color: '#6AA98E' }}
                 >
                   Esqueci minha senha
                 </Link>
@@ -126,7 +137,11 @@ const LoginForm = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-12 text-base font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
+                style={{ 
+                  backgroundColor: '#347BA7',
+                  color: '#FFFFFF'
+                }}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -140,26 +155,21 @@ const LoginForm = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-2">
+            <div className="mt-6 text-center space-y-3">
               <Link 
                 to="/register" 
-                className="text-sm text-primary hover:underline"
+                className="text-sm hover:underline transition-colors font-medium"
+                style={{ color: '#6AA98E' }}
               >
                 Não tem uma conta? Cadastre-se
               </Link>
-              <br />
-              <a 
-                href="#" 
-                className="text-sm text-muted-foreground hover:text-primary"
-              >
-                Esqueceu sua senha?
-              </a>
             </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 pt-4 border-t text-center">
               <Link 
                 to="/admin/login" 
-                className="text-sm text-muted-foreground hover:text-primary"
+                className="text-sm hover:underline transition-colors inline-flex items-center gap-1"
+                style={{ color: '#347BA7' }}
               >
                 Acesso Administrativo →
               </Link>
@@ -168,20 +178,19 @@ const LoginForm = () => {
         </Card>
 
         {/* Informações adicionais */}
-        <div className="mt-8 pt-6 border-t text-center">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <Car className="h-5 w-5" />
-            <span className="text-lg font-bold">RentCar</span>
+        <div className="mt-8 pt-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Car className="h-5 w-5" style={{ color: '#6AA98E' }} />
+            <span className="text-lg font-bold" style={{ color: '#122447' }}>LocPoços</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Aluguel de veículos para motoristas profissionais
+          <p className="text-sm mb-4" style={{ color: '#347BA7' }}>
+            Locação de veículos para motoristas profissionais
           </p>
-        </div>
-
-        <div className="mt-4 text-center text-xs text-muted-foreground">
-          <a href="#" className="hover:text-primary">Termos de Uso</a>
-          {" • "}
-          <a href="#" className="hover:text-primary">Política de Privacidade</a>
+          <div className="text-xs text-muted-foreground space-x-3">
+            <a href="#" className="hover:underline transition-colors" style={{ color: '#6AA98E' }}>Termos de Uso</a>
+            <span>•</span>
+            <a href="#" className="hover:underline transition-colors" style={{ color: '#6AA98E' }}>Política de Privacidade</a>
+          </div>
         </div>
       </div>
     </div>

@@ -48,11 +48,8 @@ export default function RegisterChoice() {
               <KeyRound className="w-6 h-6 flex-shrink-0" />
               <div className="flex-1 ml-3">
                 <div className="font-semibold leading-snug">Quero alugar um carro</div>
-                <div className="text-xs text-slate-500">Cadastro de motorista</div>
               </div>
-              <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#6AA98E" }}>
-                Continuar →
-              </span>
+              
             </Link>
 
             {/* Opção: Proprietário */}
@@ -63,11 +60,7 @@ export default function RegisterChoice() {
               <Car className="w-6 h-6 flex-shrink-0" />
               <div className="flex-1 ml-3">
                 <div className="font-semibold leading-snug">Quero colocar meu carro para alugar</div>
-                <div className="text-xs text-slate-500">Cadastro de proprietário</div>
-              </div>
-              <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#6AA98E" }}>
-                Continuar →
-              </span>
+              </div>              
             </Link>
           </div>
 

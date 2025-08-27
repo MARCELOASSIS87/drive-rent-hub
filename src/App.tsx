@@ -21,7 +21,7 @@ import DriverLayout from "./layouts/DriverLayout";
 import MyRequests from "./pages/MyRequests";
 import ActiveRentals from "./pages/ActiveRentals";
 import RegisterChoice from "./pages/RegisterChoice";
-
+import RegisterProprietario from "./pages/RegisterProprietario"; 
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -33,6 +33,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/register-choice" element={<RegisterChoice />} />
+            <Route path="/register-proprietario" element={<RegisterProprietario />} />
             {/* Driver routes */}
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<DriverLayout><Dashboard /></DriverLayout>} />

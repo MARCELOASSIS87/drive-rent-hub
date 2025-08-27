@@ -5,9 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Car, Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import { authAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
+import banner from "@/assets/banner.png";
+import loginBg from "@/assets/login-bg.png";
+
+const bgStyle: React.CSSProperties = {
+  backgroundImage: `url(${loginBg})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+};
+
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -19,7 +28,7 @@ const LoginForm = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "Erro",
@@ -36,9 +45,9 @@ const LoginForm = () => {
       const { token, motorista } = response.data;
 
       // Store auth data
-      login(token, { 
+      login(token, {
         id: motorista.id,
-        nome: motorista.nome, 
+        nome: motorista.nome,
         email: motorista.email,
         role: 'driver'
       });
@@ -49,8 +58,13 @@ const LoginForm = () => {
       });
 
       navigate("/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || "Erro ao fazer login. Tente novamente.";
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { error?: string } };
+      };
+      const errorMessage =
+        err.response?.data?.error ||
+        "Erro ao fazer login. Tente novamente.";
       toast({
         title: "Erro no login",
         description: errorMessage,
@@ -62,138 +76,95 @@ const LoginForm = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4" 
-      style={{ 
-        background: 'linear-gradient(135deg, #DAEDF3 0%, #F8FCFD 50%, #E8F4F8 100%)'
-      }}
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={bgStyle}
     >
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo e título */}
-        <div className="text-center space-y-6">
-          <div className="mx-auto">
-            <img 
-              src="/logo-locpocos.png" 
-              alt="LocPoços — Locação de Veículos" 
-              className="h-16 w-auto mx-auto"
-            />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold" style={{ color: '#122447' }}>LocPoços</h1>
-            <p className="text-lg font-medium" style={{ color: '#347BA7' }}>Locação de Veículos</p>
-            <p className="text-sm text-muted-foreground">Aluguel profissional para motoristas</p>
-          </div>
+      <Card
+        className="w-full max-w-md bg-white/100 backdrop-blur-sm shadow-2xl rounded-2xl border-0 overflow-hidden"
+        style={{ boxShadow: "var(--shadow-card)" }}
+      >
+        <div className="h-28 md:h-32 w-full bg-white/95 border-b border-white/40">
+          <div
+            className="h-full w-full bg-center bg-no-repeat" style={{
+              backgroundImage: `url(${banner})`,
+              backgroundSize: "cover", // preenche a faixa inteira
+            }}
+          />
         </div>
-
-        {/* Formulário de Login */}
-        <Card className="shadow-xl border-0 bg-white/95 backdrop-blur-sm" style={{ boxShadow: '0 20px 40px rgba(18, 36, 71, 0.15)' }}>
-          <CardHeader className="space-y-3 pb-6">
-            <CardTitle className="text-2xl font-bold text-center" style={{ color: '#122447' }}>Entrar</CardTitle>
-            <p className="text-sm text-center" style={{ color: '#347BA7' }}>
-              Acesse sua conta para gerenciar seus aluguéis
-            </p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+        <CardHeader className="flex flex-col items-center text-center space-y-2">
+          <h1 className="text-3xl font-bold text-[#122447]">
+            Seja Bem vindo à LocaPoços!
+          </h1>
+          <p className="text-sm text-[#347BA7] mt-1">Faça seu login</p>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@seudominio.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+            </div>
 
-              <div className="flex justify-end">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm hover:underline transition-colors"
-                  style={{ color: '#6AA98E' }}
-                >
-                  Esqueci minha senha
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 text-base font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
-                style={{ 
-                  backgroundColor: '#347BA7',
-                  color: '#FFFFFF'
-                }}
-                disabled={isLoading}
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-[#6AA98E] hover:underline"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  "Entrar"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center space-y-3">
-              <Link 
-                to="/register" 
-                className="text-sm hover:underline transition-colors font-medium"
-                style={{ color: '#6AA98E' }}
-              >
-                Não tem uma conta? Cadastre-se
+                Esqueci minha senha
               </Link>
             </div>
 
-            <div className="mt-6 pt-4 border-t text-center">
-              <Link 
-                to="/admin/login" 
-                className="text-sm hover:underline transition-colors inline-flex items-center gap-1"
-                style={{ color: '#347BA7' }}
-              >
-                Acesso Administrativo →
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#347BA7] hover:bg-[#2c6a8f] text-white hover:shadow-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </form>
 
-        {/* Informações adicionais */}
-        <div className="mt-8 pt-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Car className="h-5 w-5" style={{ color: '#6AA98E' }} />
-            <span className="text-lg font-bold" style={{ color: '#122447' }}>LocPoços</span>
+          <div className="text-center text-sm text-[#347BA7]">
+            Ainda não tem cadastro?{" "}
+            <Link to="/register-choice" className="text-[#6AA98E] hover:underline">
+              Cadastre-se
+            </Link>
+
           </div>
-          <p className="text-sm mb-4" style={{ color: '#347BA7' }}>
-            Locação de veículos para motoristas profissionais
-          </p>
-          <div className="text-xs text-muted-foreground space-x-3">
-            <a href="#" className="hover:underline transition-colors" style={{ color: '#6AA98E' }}>Termos de Uso</a>
-            <span>•</span>
-            <a href="#" className="hover:underline transition-colors" style={{ color: '#6AA98E' }}>Política de Privacidade</a>
-          </div>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </div >
   );
 };
 

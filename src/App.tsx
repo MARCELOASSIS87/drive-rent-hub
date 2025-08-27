@@ -20,6 +20,7 @@ import ContratoDigital from "./pages/ContratoDigital";
 import DriverLayout from "./layouts/DriverLayout";
 import MyRequests from "./pages/MyRequests";
 import ActiveRentals from "./pages/ActiveRentals";
+import RegisterChoice from "./pages/RegisterChoice";
 
 const queryClient = new QueryClient();
 
@@ -31,9 +32,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/register-choice" element={<RegisterChoice />} />
             {/* Driver routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<DriverLayout><Dashboard /></DriverLayout>} />
             <Route path="/solicitacoes" element={<DriverLayout><MyRequests /></DriverLayout>} />
             <Route path="/alugueis" element={<DriverLayout><ActiveRentals /></DriverLayout>} />

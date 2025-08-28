@@ -20,6 +20,7 @@ const items = [
   { title: "Veículos", url: "/owner/veiculos", icon: Car },
   { title: "Contratos", url: "/owner/contratos", icon: FileText },
   { title: "Documentos", url: "/owner/documentos", icon: IdCard },
+  { title: "Dashboard", url: "/owner", icon: IdCard },
 ];
 
 export default function OwnerSidebar() {

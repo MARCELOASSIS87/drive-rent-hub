@@ -10,7 +10,7 @@ import { vehiclesAPI, rentalRequestsAPI } from "@/services/api";
 import { Vehicle } from "@/types/backend";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrencyBR } from "@/lib/utils";
-
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const RentalRequest = () => {
   const { carId } = useParams<{ carId: string }>();
@@ -175,7 +175,7 @@ const RentalRequest = () => {
               <img
                 src={
                   car.foto_principal_url
-                    ? `http://localhost:3001${car.foto_principal_url}`
+                    ? `${API_BASE}${car.foto_principal_url}`
                     : "/placeholder.svg"
                 }
                 alt={`${car.marca} ${car.modelo}`}

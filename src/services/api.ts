@@ -178,10 +178,10 @@ export const contractsAPI = {
     return api.get(url);
   },
   finalize(contractId: number) {
-  const url = `/contratos/${contractId}/finalizar`;
-  console.log('[contractsAPI] POST', url);
-  return api.post(url);
-},
+    const url = `/contratos/${contractId}/finalizar`;
+    console.log('[contractsAPI] POST', url);
+    return api.post(url);
+  },
 
   // List contract revisions
   listRevisions: (id: number) => api.get(`/contratos/${id}/revisoes`),
@@ -232,3 +232,18 @@ export async function gerarContratoComFallback(payload: {
   }
 }
 
+// === Owner Dashboard KPIs ===
+export type OwnerStats = {
+  veiculosAlugados: number;        // veículos do proprietário atualmente alugados
+  alugueisAtivos: number;          // contratos/aluguéis em andamento
+  solicitacoesPendentes: number;   // solicitações aguardando decisão do proprietário
+};
+
+export async function getOwnerStats(): Promise<OwnerStats> {
+  // OBS: usa o cliente 'api' já configurado neste arquivo
+  // Ajuste a rota se seu backend usar prefixo diferente (ex.: '/api/owner/stats')
+  const { data } = await api.get<OwnerStats>("/owner/stats", {
+    withCredentials: true,
+  });
+  return data;
+}

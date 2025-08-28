@@ -1,71 +1,77 @@
-// src/pages/owner/OwnerDashboard.tsx
-import { Link } from "react-router-dom";
-import { Car, FileText, PlusCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Car, ClipboardCheck, FileClock } from "lucide-react";
+import { getOwnerStats, OwnerStats } from "@/services/api";
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <h2 className="text-3xl font-bold mt-1">{value}</h2>
+        </div>
+        <Icon className="w-8 h-8 opacity-60" />
+      </div>
+    </Card>
+  );
+}
 
 export default function OwnerDashboard() {
+  const { data, isLoading, isFetching, refetch } = useQuery<OwnerStats>({
+    queryKey: ["ownerStats"],
+    queryFn: getOwnerStats,
+    staleTime: 30_000,
+  });
+
   return (
     <div className="flex-1 p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          Painel do Proprietário
-        </h1>
-        <p className="text-muted-foreground">
-          Gerencie seus veículos e contratos
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Painel do Proprietário</h1>
+          <p className="text-muted-foreground">Visão geral da sua operação</p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="text-sm px-3 py-2 rounded-md border hover:bg-muted"
+          disabled={isFetching}
+          title="Atualizar indicadores"
+        >
+          {isFetching ? "Atualizando..." : "Atualizar"}
+        </button>
       </div>
 
-      {/* Cards principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Car className="w-5 h-5" />
-            <h3 className="font-semibold">Meus veículos</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Cadastre e acompanhe seus veículos disponíveis para aluguel.
-          </p>
-          <div className="flex gap-2">
-            <Button asChild className="h-9">
-              <Link to="/owner/veiculos">Abrir</Link>
-            </Button>
-            <Button asChild variant="outline" className="h-9">
-              <Link to="/owner/veiculos/novo">
-                <PlusCircle className="w-4 h-4 mr-1" />
-                Novo
-              </Link>
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="w-5 h-5" />
-            <h3 className="font-semibold">Contratos</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Acompanhe solicitações, contratos ativos e histórico.
-          </p>
-          <Button asChild className="h-9">
-            <Link to="/owner/contratos">Ver contratos</Link>
-          </Button>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="w-5 h-5" />
-            <h3 className="font-semibold">Documentos</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Envie e gerencie seus documentos (CNH/CRLV/Comprovantes).
-          </p>
-          <Button asChild variant="outline" className="h-9">
-            <Link to="/owner/documentos">Gerenciar</Link>
-          </Button>
-        </Card>
-      </div>
+      {/* KPIs */}
+      {isLoading ? (
+        <p className="text-muted-foreground">Carregando indicadores...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard
+            icon={Car}
+            label="Veículos alugados"
+            value={data?.veiculosAlugados ?? 0}
+          />
+          <StatCard
+            icon={ClipboardCheck}
+            label="Aluguéis ativos"
+            value={data?.alugueisAtivos ?? 0}
+          />
+          <StatCard
+            icon={FileClock}
+            label="Solicitações pendentes"
+            value={data?.solicitacoesPendentes ?? 0}
+          />
+        </div>
+      )}
     </div>
   );
 }

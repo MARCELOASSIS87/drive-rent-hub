@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { Vehicle } from "@/types/backend";
 import { formatCurrencyBR } from "@/lib/utils";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 interface CarCardProps {
   car: Vehicle;
 }
@@ -31,7 +33,7 @@ export const CarCard = ({ car }: CarCardProps) => {
         <img
           src={
             car.foto_principal_url
-              ? `http://localhost:3001${car.foto_principal_url}`
+              ? `${API_BASE}${car.foto_principal_url}`
               : "/placeholder.svg"
           }
           alt={`${car.marca} ${car.modelo}`}

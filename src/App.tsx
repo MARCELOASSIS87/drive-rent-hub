@@ -7,8 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import RentalRequest from "./pages/RentalRequest";
+import Dashboard from "./pages/driver/Dashboard";
+import RentalRequest from "./pages/driver/RentalRequest";
 import AdminLogin from "./pages/AdminLogin";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -16,13 +16,19 @@ import Motoristas from "./pages/admin/Motoristas";
 import Veiculos from "./pages/admin/Veiculos";
 import Solicitacoes from "./pages/admin/Solicitacoes";
 import Contratos from "./pages/admin/Contratos";
-import ContratoDigital from "./pages/ContratoDigital";
+import ContratoDigital from "./pages/driver/ContratoDigital";
 import DriverLayout from "./layouts/DriverLayout";
-import MyRequests from "./pages/MyRequests";
-import ActiveRentals from "./pages/ActiveRentals";
+import MyRequests from "./pages/driver/MyRequests";
+import ActiveRentals from "./pages/driver/ActiveRentals";
 import RegisterChoice from "./pages/RegisterChoice";
 import RegisterProprietario from "./pages/RegisterProprietario";
-import OwnerDashboard from "./pages/OwnerDashboard";
+import OwnerLayout from "./layouts/OwnerLayout";
+import OwnerDashboard from "./pages/owner/OwnerDashboard";
+import OwnerVeiculos from "./pages/owner/OwnerVeiculos";
+import OwnerContratos from "./pages/owner/OwnerContratos";
+import OwnerDocumentos from "./pages/owner/OwnerDocumentos";
+
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -35,6 +41,7 @@ const App = () => (
           <Routes>
             <Route path="/register-choice" element={<RegisterChoice />} />
             <Route path="/register-proprietario" element={<RegisterProprietario />} />
+            <Route path="/register" element={<Register />} />
             {/* Driver routes */}
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<DriverLayout><Dashboard /></DriverLayout>} />
@@ -42,8 +49,13 @@ const App = () => (
             <Route path="/alugueis" element={<DriverLayout><ActiveRentals /></DriverLayout>} />
             <Route path="/rental-request/:carId" element={<DriverLayout><RentalRequest /></DriverLayout>} />
             <Route path="/contrato/:id" element={<DriverLayout><ContratoDigital /></DriverLayout>} />
+
+
             {/*Owner Routes*/}
-            <Route path="/owner" element={<OwnerDashboard />} />
+            <Route path="/owner" element={<OwnerLayout><OwnerDashboard /></OwnerLayout>} />
+            <Route path="/owner/veiculos" element={<OwnerLayout><OwnerVeiculos /></OwnerLayout>} />
+            <Route path="/owner/contratos" element={<OwnerLayout><OwnerContratos /></OwnerLayout>} />
+            <Route path="/owner/documentos" element={<OwnerLayout><OwnerDocumentos /></OwnerLayout>} />
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

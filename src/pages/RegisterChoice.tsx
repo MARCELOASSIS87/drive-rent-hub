@@ -42,7 +42,7 @@ export default function RegisterChoice() {
           <div className="space-y-4">
             {/* Opção: Motorista */}
             <Link
-              to="/register-motorista"
+              to="/register"
               className="group flex items-center w-full rounded-xl border border-slate-200 hover:shadow-md transition p-4"
             >
               <KeyRound className="w-6 h-6 flex-shrink-0" />

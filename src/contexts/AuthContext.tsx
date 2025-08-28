@@ -4,7 +4,7 @@ interface User {
   id?: number;
   nome: string;
   email: string;
-  role?: 'comum' | 'super' | 'driver';
+  role?: 'comum' | 'super' | 'driver' | "proprietario";
 }
 
 interface AuthContextType {

@@ -21,7 +21,8 @@ import DriverLayout from "./layouts/DriverLayout";
 import MyRequests from "./pages/MyRequests";
 import ActiveRentals from "./pages/ActiveRentals";
 import RegisterChoice from "./pages/RegisterChoice";
-import RegisterProprietario from "./pages/RegisterProprietario"; 
+import RegisterProprietario from "./pages/RegisterProprietario";
+import OwnerDashboard from "./pages/OwnerDashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -41,6 +42,8 @@ const App = () => (
             <Route path="/alugueis" element={<DriverLayout><ActiveRentals /></DriverLayout>} />
             <Route path="/rental-request/:carId" element={<DriverLayout><RentalRequest /></DriverLayout>} />
             <Route path="/contrato/:id" element={<DriverLayout><ContratoDigital /></DriverLayout>} />
+            {/*Owner Routes*/}
+            <Route path="/owner" element={<OwnerDashboard />} />
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

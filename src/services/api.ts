@@ -28,14 +28,25 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/';
+    const { response, config } = error || {};
+    const url = config?.url || "";
+
+    // não redireciona em 401 vindos dos logins
+    const isAuthEndpoint =
+      url.includes("/auth/login") ||
+      url.includes("/motoristas/login") ||
+      url.includes("/admin/login");
+
+    if (response?.status === 401 && !isAuthEndpoint) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/";
     }
+
     return Promise.reject(error);
   }
 );
+
 
 // Auth API
 export const authAPI = {

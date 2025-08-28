@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2 } from "lucide-react";
-import { authAPI } from "@/services/api";
+import { api, authAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import banner from "@/assets/banner.png";
 import loginBg from "@/assets/login-bg.png";
@@ -25,55 +25,97 @@ const LoginForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [perfil, setPerfil] = useState<'motorista' | 'proprietario'>('motorista');
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!email || !password) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos.",
-        variant: "destructive",
-      });
-      return;
-    }
+  if (!email || !password) {
+    toast({
+      title: "Erro",
+      description: "Por favor, preencha todos os campos.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
+  console.group("[LOGIN]");
+  console.log("start ►", { email, perfil });
 
-    try {
-      const response = await authAPI.loginDriver(email, password);
-      const { token, motorista } = response.data;
+  try {
+    // ============================
+    // 1) PROPRIETÁRIO primeiro (se selecionado)
+    // ============================
+    if (perfil === "proprietario") {
+      const url = "/auth/login";
+      console.log("[OWNER] POST", `${api.defaults.baseURL || ""}${url}`);
 
-      // Store auth data
-      login(token, {
-        id: motorista.id,
-        nome: motorista.nome,
-        email: motorista.email,
-        role: 'driver'
+      // backend espera { email, senha }
+      const res = await api.post(url, { email, senha: password });
+      const data = res.data || {};
+
+      if (!(data?.token && (data?.proprietario || data?.role === "proprietario"))) {
+        console.warn("[OWNER] resposta inesperada:", data);
+        throw new Error(
+          data?.error || data?.message || "Resposta inválida do /auth/login (proprietário)."
+        );
+      }
+
+      const p = data.proprietario ?? { id: data.id, nome: data.nome, email };
+      // use aqui o literal que seu AuthContext aceita: "owner" OU "proprietario"
+      login(data.token, {
+        id: p.id,
+        nome: p.nome,
+        email: p.email,
+        role: "proprietario", // troque para "proprietario" se for o literal do seu tipo
       });
 
       toast({
         title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${motorista.nome}`,
+        description: `Bem-vindo, ${p.nome} (proprietário)`,
       });
 
-      navigate("/dashboard");
-    } catch (error: unknown) {
-      const err = error as {
-        response?: { data?: { error?: string } };
-      };
-      const errorMessage =
-        err.response?.data?.error ||
-        "Erro ao fazer login. Tente novamente.";
-      toast({
-        title: "Erro no login",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      console.log("[OWNER] ok → /owner");
+      navigate("/owner", { replace: true });
+      return;
     }
-  };
+
+    // ============================
+    // 2) MOTORISTA (fluxo original)
+    // ============================
+    console.log("[DRIVER] tentando authAPI.loginDriver()");
+    const resDriver = await authAPI.loginDriver(email, password);
+    const { token, motorista } = resDriver.data;
+
+    login(token, {
+      id: motorista.id,
+      nome: motorista.nome,
+      email: motorista.email,
+      role: "driver",
+    });
+
+    toast({
+      title: "Login realizado com sucesso!",
+      description: `Bem-vindo, ${motorista.nome}`,
+    });
+
+    console.log("[DRIVER] ok → /dashboard");
+    navigate("/dashboard", { replace: true });
+    return;
+  } catch (err: any) {
+    console.error("[LOGIN] erro:", err?.response?.data?.error || err?.message || err);
+    toast({
+      title: "Erro no login",
+      description: err?.response?.data?.error || err?.message || "Erro ao fazer login.",
+      variant: "destructive",
+    });
+  } finally {
+    console.groupEnd();
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div
@@ -99,6 +141,29 @@ const LoginForm = () => {
           <p className="text-sm text-[#347BA7] mt-1">Faça seu login</p>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
+          <div className="w-full flex items-center justify-center gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setPerfil('motorista')}
+              className={`px-3 py-1.5 rounded-lg text-sm border ${perfil === 'motorista'
+                ? 'bg-[#347BA7] text-white border-[#347BA7]'
+                : 'bg-white text-slate-700 border-slate-300'
+                }`}
+            >
+              Sou Motorista
+            </button>
+            <button
+              type="button"
+              onClick={() => setPerfil('proprietario')}
+              className={`px-3 py-1.5 rounded-lg text-sm border ${perfil === 'proprietario'
+                ? 'bg-[#347BA7] text-white border-[#347BA7]'
+                : 'bg-white text-slate-700 border-slate-300'
+                }`}
+            >
+              Sou Proprietário
+            </button>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>

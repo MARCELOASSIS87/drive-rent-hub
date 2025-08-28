@@ -20,7 +20,7 @@ echo "----------------------------------------"
 # 3. Adiciona todas as alterações ao stage (arquivos novos, modificados e deletados).
 echo "🔄 Adicionando todas as alterações ao Git..."
 git add .
-
+git status
 # 4. Faz o commit com a mensagem fornecida pelo usuário.
 echo "📝 Realizando o commit com a mensagem: '$COMMIT_MESSAGE'"
 git commit -m "$COMMIT_MESSAGE"

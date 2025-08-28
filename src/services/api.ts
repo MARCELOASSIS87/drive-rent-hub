@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.locapocos.com.br';
-
+const BASE_URL = import.meta.env.VITE_API_URL;
+if (!BASE_URL) {
+  throw new Error("FATAL ERROR: A variável de ambiente VITE_API_URL não foi definida!");
+}
 // Create axios instance
 export const api = axios.create({
   baseURL: BASE_URL,
